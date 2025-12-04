@@ -313,7 +313,7 @@ class DatabaseService:
         
         return health
     
-    def _ensure_conversation_exists(self, conversation_id: str):
+    def _ensure_conversation_exists(self, conversation_id: str, user_id: Optional[str] = None):
         """Ensure conversation exists in database before adding messages."""
         try:
             # Check if conversation exists
@@ -321,12 +321,12 @@ class DatabaseService:
             
             if not response.data:
                 # Create conversation if it doesn't exist
-                # Use a consistent default user ID or create one
-                default_user_id = "00000000-0000-0000-0000-000000000001"  # Consistent default UUID
+                # Use provided user_id or a consistent default
+                actual_user_id = user_id if user_id else "00000000-0000-0000-0000-000000000001"
                 
                 conversation_data = {
                     "id": conversation_id,
-                    "user_id": default_user_id,
+                    "user_id": actual_user_id,
                     "title": "AI Chat",
                     "created_at": datetime.utcnow().isoformat(),
                     "updated_at": datetime.utcnow().isoformat()
@@ -334,7 +334,7 @@ class DatabaseService:
                 
                 create_response = self.supabase.table("conversations").insert(conversation_data).execute()
                 if create_response.data:
-                    logger.info("Created missing conversation in database", conversation_id=conversation_id)
+                    logger.info("Created missing conversation in database", conversation_id=conversation_id, user_id=actual_user_id)
                     
         except Exception as e:
             logger.warning("Could not ensure conversation exists", conversation_id=conversation_id, error=str(e))

@@ -24,7 +24,7 @@ class ChatService:
             await self.ensure_conversation_exists(conversation_id, user_id)
             
             # Store user message
-            user_message_id = await self.store_message(conversation_id, message, "user")
+            user_message_id = await self.store_message(conversation_id, message, "user", user_id=user_id)
             if not user_message_id:
                 logger.warning("Failed to store user message but continuing")
             
@@ -54,7 +54,7 @@ class ChatService:
                     response = f"I'm here to help with your travel planning. What would you like to know about your trip?"
             
             # Store assistant response
-            assistant_message_id = await self.store_message(conversation_id, response, "assistant")
+            assistant_message_id = await self.store_message(conversation_id, response, "assistant", user_id=user_id)
             if not assistant_message_id:
                 logger.warning("Failed to store assistant message")
             
@@ -84,10 +84,10 @@ class ChatService:
                 "next_actions": []
             }
     
-    async def store_message(self, conversation_id: str, content: str, role: str, metadata: Dict[str, Any] = None) -> Optional[str]:
+    async def store_message(self, conversation_id: str, content: str, role: str, metadata: Dict[str, Any] = None, user_id: Optional[str] = None) -> Optional[str]:
         """Store a message in the conversation with database persistence"""
         try:
-            message_id = await db_service.add_message(conversation_id, content, role, metadata)
+            message_id = await db_service.add_message(conversation_id, content, role, metadata, user_id)
             
             if message_id:
                 logger.info("Message stored successfully", conversation_id=conversation_id, role=role, message_id=message_id)

@@ -283,8 +283,11 @@ class GeminiService:
     
     def close(self):
         """Close the client connection."""
+        # The genai.Client doesn't have a close() method
+        # Resources are automatically cleaned up
         if self.client:
-            self.client.close()
+            logger.info("Gemini service cleanup called (client auto-managed)")
+            self.client = None
 
 
 # Global Gemini service instance

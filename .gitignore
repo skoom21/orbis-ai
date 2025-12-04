@@ -20,3 +20,5 @@ env/
 *.egg-info/
 build/
 .eggs/
+.env
+apps/api/.env
