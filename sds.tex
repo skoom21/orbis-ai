@@ -1,0 +1,423 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- PREAMBLE ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
+\usepackage{fontspec}
+\usepackage[english]{babel}
+
+% Fonts setup for LuaLaTeX
+\setmainfont{Noto Sans}
+\setsansfont{Noto Sans}
+\setmonofont{Noto Sans Mono}
+
+% Packages for layout and formatting
+\usepackage{graphicx}     % For images
+\usepackage{titlesec}     % For section formatting
+\usepackage{fancyhdr}     % For headers/footers
+\usepackage{tabularx}     % For flexible tables
+\usepackage{longtable}    % For tables that span pages
+\usepackage{booktabs}     % For professional table lines
+\usepackage{float}        % For figure placement
+\usepackage{hyperref}     % For clickable links in TOC
+\usepackage{enumitem}     % For better list control
+\usepackage{titlesec}
+
+% Hyperlink setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={Software Design Specifications - Orbis AI},
+    pdfpagemode=FullScreen,
+}
+
+
+\titleformat{\paragraph}
+  {\normalfont\normalsize\bfseries}
+  {\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{1em}{0.5em}
+
+% Header and Footer setup
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Software Design Specifications}
+\rhead{Version: 1.5}
+\cfoot{\thepage}
+
+% Macros for project details
+\newcommand{\projectname}{Orbis AI}
+\newcommand{\projectversion}{1.5}
+\newcommand{\supervisor}{Ms. Bakhtawar Abbasi}
+
+% Macro for Data Dictionary Table
+% Arguments: {TableName}{TableContent}
+\newcommand{\datadictionarytable}[2]{
+    \noindent\textbf{Table Name: #1}
+    \begin{center}
+    \begin{tabularx}{\linewidth}{|l|l|l|X|}
+        \hline
+        \textbf{Attribute} & \textbf{Data Type} & \textbf{Constraints} & \textbf{Description} \\
+        \hline
+        #2
+    \end{tabularx}
+    \end{center}
+    \vspace{0.5cm}
+}
+
+% Macro for Diagram Placeholder
+\newcommand{\diagramplaceholder}[2]{
+    \begin{figure}[H]
+        \centering
+        \framebox{\parbox{0.8\linewidth}{\centering
+            \vspace{4cm}
+            \textbf{#1} \\
+            \small\textit{#2}
+            \vspace{4cm}
+        }}
+        \caption{#1}
+    \end{figure}
+}
+
+\begin{document}
+
+% ==========================================
+% TITLE PAGE
+% ==========================================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{Software Design Specifications}}\\[1cm]
+    {\huge \textbf{\projectname}}\\[0.5cm]
+    {\Large \textbf{Intelligent Travel Planning System}}\\[0.5cm]
+    {\Large \textbf{Version: \projectversion}}\\[2cm]
+    
+    \begin{tabularx}{0.8\textwidth}{l X}
+        \textbf{Project ID:} & F25-54 \\ [10pt]
+        \textbf{Supervisor:} & \supervisor \\ [10pt]
+        \textbf{Co Supervisor:} & - \\ [10pt]
+        \textbf{Project Team:} & M. Talha Yousif (Leader) \\
+         & Salik Ahmed Bhatti \\
+         & Toheed Ali \\ [10pt]
+        \textbf{Submission Date:} & November 30, 2025 \\
+    \end{tabularx}
+    
+    \vfill
+    
+    {\large \textbf{Department of Computer Science}}
+    
+    \vspace*{1cm}
+    {\large \textbf{National University of Computer \& Emerging Sciences}}
+\end{titlepage}
+
+% ==========================================
+% INSTRUCTIONS
+
+% ==========================================
+% DOCUMENT HISTORY
+% ==========================================
+\newpage
+\section*{Document History}
+\noindent [Revision history will be maintained to keep a track of changes done by anyone in the document.]
+
+\vspace{0.5cm}
+
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+    \hline
+    \textbf{Version} & \textbf{Author} & \textbf{Date} & \textbf{Description of change} \\
+    \hline
+    1.0 & M. Talha Yousif & 29/11/2025 & Initial document creation and structure setup \\
+    \hline
+    1.1 & M. Talha Yousif & 29/11/2025 & Introduction section completed with objectives \\
+    \hline
+    1.2 & Salik Ahmed Bhatti & 29/11/2025 & Project scope and exclusions defined \\
+    \hline
+    1.3 & Toheed Ali & 29/11/2025 & System constraints and interface requirements \\
+    \hline
+    1.4 & M. Talha Yousif & 30/11/2025 & Use case diagram and functional requirements \\
+    \hline
+    1.5 & Team & 30/11/2025 & Final review and SDS compilation \\
+    \hline
+\end{tabularx}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ==========================================
+% 1. INTRODUCTION
+% ==========================================
+\section{Introduction}
+
+\subsection{Purpose of Document}
+The purpose of this Software Design Specification (SDS) is to describe the system architecture, detailed design, and database structure of \textbf{Orbis AI}, an intelligent travel planning system. This document serves as a guide for developers, project managers, and quality assurance teams to understand the technical implementation of the multi-agent AI system and its integration with external travel APIs.
+
+\subsection{Intended Audience}
+\begin{itemize}
+    \item \textbf{Developers:} To implement the backend logic, AI agents, and frontend interfaces.
+    \item \textbf{Project Supervisors:} To evaluate the technical depth and design soundness.
+    \item \textbf{QA Team:} To understand system flows for designing test cases.
+\end{itemize}
+
+\subsection{Document Convention}
+\begin{itemize}
+    \item \textbf{Database:} PostgreSQL conventions (snake\_case for tables and columns).
+    \item \textbf{API:} RESTful standards for endpoints.
+    \item \textbf{Variable Naming:} camelCase for JavaScript/React, snake\_case for Python backend.
+\end{itemize}
+
+\subsection{Project Overview}
+Orbis AI is a comprehensive travel planning application that leverages a Multi-Agent System (MAS) to automate the complexities of trip organization. Unlike traditional platforms that require manual aggregation of flights, hotels, and activities, Orbis AI utilizes specialized AI agents (Coordinator, Flight, Hotel, Activity) to generate personalized itineraries. The system integrates with major travel APIs (Amadeus, Skyscanner) to provide real-time booking capabilities and dynamic itinerary adjustments.
+
+\subsection{Scope}
+The scope of Orbis AI includes:
+\begin{itemize}
+    \item \textbf{User Management:} Authentication, profile management, and travel history tracking.
+    \item \textbf{AI Trip Planning:} Natural language processing for intent recognition and multi-agent coordination for itinerary generation.
+    \item \textbf{Search \& Booking:} Real-time searching of flights and hotels via Amadeus/Skyscanner APIs and secure payment processing via Stripe.
+    \item \textbf{Itinerary Management:} Interactive timelines, collaborative editing, and PDF export.
+\end{itemize}
+\textit{Exclusions:} Visa processing services, physical tour guide allocation, and offline-only functionality.
+
+% ==========================================
+% 2. DESIGN CONSIDERATIONS
+% ==========================================
+\section{Design Considerations}
+
+\subsection{Assumptions and Dependencies}
+\begin{itemize}
+    \item \textbf{External APIs:} The system relies on the continuous availability of Amadeus, Skyscanner, and OpenAI/LangChain APIs.
+    \item \textbf{Connectivity:} Users must have a stable internet connection to interact with the AI agents.
+    \item \textbf{Payment Gateway:} Stripe test mode will be used for development; valid credentials are assumed for production.
+\end{itemize}
+
+\subsection{Risks and Volatile Areas}
+\begin{itemize}
+    \item \textbf{API Rate Limits:} Third-party travel APIs may impose rate limits that could affect search performance.
+    \item \textbf{LLM Hallucinations:} AI agents might generate non-existent travel options; strict validation layers are required.
+    \item \textbf{Data Privacy:} Handling sensitive user data (passports, payments) requires robust encryption and GDPR compliance.
+\end{itemize}
+
+\newpage
+% ==========================================
+% 3. SYSTEM ARCHITECTURE
+% ==========================================
+\section{System Architecture}
+
+\subsection{System Level Architecture}
+The system follows a modern client-server architecture with a specialized AI layer. The frontend is built with React/Next.js, communicating with a Python-based backend (FastAPI/Django) that orchestrates LangChain agents.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/Architecture.png}
+\end{figure}
+
+\newpage
+\subsection{Software Architecture}
+Orbis AI utilizes a \textbf{Service-Oriented Architecture (SOA)} combined with an \textbf{Agentic Pattern}.
+\begin{itemize}
+    \item \textbf{Presentation Layer:} React.js web interface.
+    \item \textbf{Application Layer:} Handles business logic, user sessions, and API orchestration.
+    \item \textbf{Intelligence Layer:} Powered by LangChain and AutoGen, housing the distinct agents (flight search, hotel booking, itinerary optimizer).
+    \item \textbf{Data Layer:} PostgreSQL with `pgvector` for vector embeddings (for personalized recommendations).
+\end{itemize}
+
+% ==========================================
+% 4. DESIGN STRATEGY
+% ==========================================
+\section{Design Strategy}
+The design strategy prioritizes \textbf{Modularity} and \textbf{Scalability}.
+\begin{itemize}
+    \item \textbf{Object-Oriented Design (OOD):} Used for defining agent classes and data models.
+    \item \textbf{Agent-Based Modeling:} Decoupling the "Flight Search" logic from "Hotel Search" logic allows independent scaling and maintenance of agents.
+    \item \textbf{Secure by Design:} Implementing Role-Based Access Control (RBAC) and data encryption at rest.
+\end{itemize}
+
+% ==========================================
+% 5. DETAILED SYSTEM DESIGN
+% ==========================================
+\section{Detailed System Design}
+
+\subsection{Database Design}
+
+\subsubsection{ER Diagram}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/ERD.png}
+\end{figure}
+
+\newpage
+\subsubsection{Data Dictionary}
+The database is implemented in PostgreSQL. Below are the key schemas derived from the project's SQL definition.
+
+\paragraph{5.1.2.1 Users Table}
+\datadictionarytable{public.users}{
+    id & uuid & PK, Not Null & Unique user identifier \\ \hline
+    email & text & Unique, Not Null & User email address \\ \hline
+    full\_name & text & Nullable & User's full name \\ \hline
+    status & user\_status & Default 'active' & Account status \\ \hline
+    metadata & jsonb & Default '\{\}' & JSON store for arbitrary user data \\ \hline
+    created\_at & timestamp & Default now() & Account creation time \\ \hline
+}
+
+\paragraph{5.1.2.2 Trips Table}
+\datadictionarytable{public.trips}{
+    id & uuid & PK, Not Null & Unique trip identifier \\ \hline
+    user\_id & uuid & FK (users) & Owner of the trip \\ \hline
+    title & text & Not Null & Name of the trip \\ \hline
+    status & trip\_status & Default 'planning' & e.g., planning, booked, completed \\ \hline
+    budget\_total & numeric & Check >= 0 & Total budget for the trip \\ \hline
+    generated\_itinerary & jsonb & Nullable & The AI-generated itinerary structure \\ \hline
+    is\_public & boolean & Default false & Visibility of the trip \\ \hline
+}
+
+\paragraph{5.1.2.3 Chat Sessions}
+\datadictionarytable{public.chat\_sessions}{
+    id & uuid & PK, Not Null & Unique session ID \\ \hline
+    user\_id & uuid & FK (users) & User associated with the chat \\ \hline
+    trip\_id & uuid & FK (trips), Nullable & Linked trip context \\ \hline
+    title & text & Nullable & Summary or title of the chat \\ \hline
+    context\_summary & text & Nullable & AI-generated summary of context \\ \hline
+}
+
+\paragraph{5.1.2.4 Messages}
+\datadictionarytable{public.messages}{
+    id & uuid & PK, Not Null & Unique message ID \\ \hline
+    session\_id & uuid & FK (chat\_sessions) & Parent session \\ \hline
+    sender\_type & text & Not Null & 'user', 'agent', or 'system' \\ \hline
+    content & text & Not Null & The message body \\ \hline
+    tool\_calls & jsonb & Default '[]' & Records of AI tool usage \\ \hline
+}
+
+\paragraph{5.1.2.5 Agent Runs}
+\datadictionarytable{public.agent\_runs}{
+    id & uuid & PK, Not Null & Unique execution ID \\ \hline
+    session\_id & uuid & FK (chat\_sessions) & Context session \\ \hline
+    agent\_type & text & Not Null & e.g., 'coordinator', 'flight\_agent' \\ \hline
+    status & text & Not Null & 'running', 'completed', 'failed' \\ \hline
+    tokens\_used & integer & Default 0 & Token consumption count \\ \hline
+}
+
+\paragraph{5.1.2.6 Flight Search Results}
+\datadictionarytable{public.flight\_search\_results}{
+    id & uuid & PK, Not Null & Unique result ID \\ \hline
+    session\_id & uuid & FK & Associated chat session \\ \hline
+    carrier & text & Not Null & Airline name \\ \hline
+    departure\_time & timestamp & Not Null & Flight departure \\ \hline
+    price & numeric & Not Null & Cost of the flight \\ \hline
+    raw\_data & jsonb & Not Null & Full JSON response from API \\ \hline
+}
+
+\paragraph{5.1.2.7 Bookings}
+\datadictionarytable{public.bookings}{
+    id & uuid & PK, Not Null & Unique booking ID \\ \hline
+    trip\_id & uuid & FK (trips) & Associated trip \\ \hline
+    type & booking\_type & Not Null & 'flight', 'hotel', 'activity' \\ \hline
+    provider\_booking\_id & text & Nullable & External ID from provider \\ \hline
+    status & booking\_status & Default 'pending' & Status of the reservation \\ \hline
+    cost & numeric & Not Null & Final cost \\ \hline
+}
+
+\paragraph{5.1.2.8 Payments}
+\datadictionarytable{public.payments}{
+    id & uuid & PK, Not Null & Unique payment ID \\ \hline
+    booking\_id & uuid & FK (bookings) & Associated booking \\ \hline
+    amount & numeric & Not Null & Payment amount \\ \hline
+    currency & text & Default 'USD' & Payment currency \\ \hline
+    stripe\_payment\_id & text & Unique & External Stripe Transaction ID \\ \hline
+    status & payment\_status & Not Null & 'succeeded', 'failed', 'pending' \\ \hline
+}
+
+\paragraph{5.1.2.9 User Preferences}
+\datadictionarytable{public.user\_preferences}{
+    user\_id & uuid & PK, FK (users) & Linked user \\ \hline
+    preferred\_airlines & text[] & Default '\{\}' & Array of airline codes \\ \hline
+    dietary\_restrictions & text[] & Default '\{\}' & e.g., 'vegan', 'halal' \\ \hline
+    accommodation\_type & text[] & Default '\{\}' & e.g., 'hotel', 'hostel' \\ \hline
+    budget\_range & jsonb & Nullable & Min/Max preferences \\ \hline
+}
+
+\newpage
+\subsection{Application Design}
+\subsubsection{Sequence Diagrams}\vspace{0.3em}
+\paragraph{5.2.1.1 User Onboarding \& Preference Setup}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/User Onboarding.png}
+\end{figure}
+
+\paragraph{5.2.1.2 AI Trip Planning Workflow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/AI Trip Planning.png}
+\end{figure}
+
+\newpage
+\paragraph{5.2.1.3 Booking \& Payment Process}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/Booking & Payment.png}
+\end{figure}
+
+\newpage
+\subsubsection{State Diagrams}
+
+\paragraph{5.2.2.1 Trip Lifecycle State}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/Trip Lifecycle.png}
+
+\end{figure}
+
+\newpage
+\paragraph{5.2.2.2 Agent Execution State}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/Agent Execution.png}
+\end{figure}
+
+\newpage
+\paragraph{5.2.2.3 Booking Status State}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/Booking Status.png}
+\end{figure}
+
+
+% ==========================================
+% 6. REFERENCES
+% ==========================================
+\newpage
+\section{References}
+\begin{thebibliography}{9}
+
+\bibitem{amadeus}
+Amadeus for Developers. "Travel APIs." [Online]. Available: \url{https://developers.amadeus.com}
+
+\bibitem{skyscanner}
+Skyscanner. "Flights API." [Online]. Available: \url{https://skyscanner.net/developers}
+
+\bibitem{booking}
+Booking.com. "Distribution API." [Online]. Available: \url{https://developers.booking.com}
+
+\bibitem{stripe}
+Stripe. "Payment API (Test Mode)." [Online]. Available: \url{https://stripe.com/docs/api}
+
+\bibitem{langchain}
+LangChain. "Building Applications with LLM Agents." [Online]. Available: \url{https://python.langchain.com}
+
+\bibitem{autogen}
+Microsoft Research. "AutoGen: Enabling Next-Gen Multi-Agent AI Systems." In \textit{Proceedings of NeurIPS Workshops}, 2023.
+
+\end{thebibliography}
+
+% ==========================================
+% 7. APPENDICES
+% ==========================================
+\section{Appendices}
+\noindent This section is not applicable for the current document. No supplementary appendices are included.
+
+
+
+\end{document}

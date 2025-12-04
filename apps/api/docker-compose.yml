@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://postgres:password@db:5432/orbis_ai
+      - REDIS_URL=redis://redis:6379
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+    volumes:
+      - ./app:/app/app:ro
+      - ./static:/app/static:ro
+    depends_on:
+      - db
+      - redis
+    develop:
+      watch:
+        - action: sync
+          path: ./app
+          target: /app/app
+        - action: rebuild
+          path: requirements.txt
+  
+  # PostgreSQL Database (for local development only)
+  db:
+    image: ankane/pgvector:v0.5.1
+    environment:
+      - POSTGRES_DB=orbis_ai
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./../../db_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

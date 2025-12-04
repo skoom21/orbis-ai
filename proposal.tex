@@ -1,0 +1,351 @@
+\documentclass[12pt,a4paper]{article}
+
+% Page setup and margins
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+
+% Font packages
+\usepackage{times}
+\usepackage[T1]{fontenc}
+
+% Essential packages
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{amssymb}
+
+% Set single spacing globally
+\singlespacing
+
+% Define custom section formatting
+\titleformat{\section}
+  {\fontsize{16}{19.2}\selectfont\bfseries}
+  {\thesection}
+  {1em}
+  {}
+
+\titleformat{\subsection}
+  {\fontsize{13}{15.6}\selectfont\bfseries}
+  {\thesubsection}
+  {1em}
+  {}
+
+\titleformat{\subsubsection}
+  {\fontsize{12}{14.4}\selectfont\bfseries\itshape}
+  {\thesubsubsection}
+  {1em}
+  {}
+
+% Remove page numbers from header, add to footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Custom commands
+\newcommand{\checkbox}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\square$}}
+\newcommand{\checkedbox}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\checkmark$}}
+
+\begin{document}
+
+% Title page
+\begin{center}
+{\Large \textbf{Orbis AI}}
+
+\vspace{0.5cm}
+
+{\Large \textbf{Final Year Project Proposal}}
+
+\vspace{0.5cm}
+
+{\large Session FALL 2025}
+
+\vspace{0.5cm}
+
+{\large A 4th Year Student}
+
+\vspace{1cm}
+
+{\large BSc. (Hons.)BS in CS/SE/AI/CY}
+
+\vspace{1cm}
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=0.25\linewidth]{National_University_of_Computer_and_Emerging_Sciences_logo.png}
+\end{figure}
+
+\vspace{0.5cm}
+
+{\large Department of CS/AI/SE/CY}
+
+{\large Fast School of Computing}
+
+{\large Fast National University, Karachi Campus}
+
+\vspace{1cm}
+
+
+\vspace{2cm}
+
+\newpage
+{\LARGE \textbf{Project Registration}}
+\end{center}
+
+\vspace{1cm}
+
+% Project Registration Table
+\begin{tabular}{|p{3.5cm}|p{11cm}|}
+\hline
+\textbf{Project ID (for office use)} & \\[0.3cm]
+\hline
+\textbf{Type of project} & 
+[\checkmark] Traditional \hspace{2cm} [ ] Industrial \hspace{2cm} [ ] Continuing \\[0.3cm]
+\hline
+\textbf{Nature of project} & 
+[\checkmark ] Development \hspace{1cm} [ ] Research \& Development \hspace{1cm} [ ] Research \\[0.3cm]
+\hline
+\multirow{3}{3.5cm}{\textbf{Sustainable Development Goals(SDGs)}} & 
+[ ] Good Health and Well-Being \hspace{1cm} [ ] Quality Education \\
+\cline{2-2}
+& [\checkmark] Industry, Innovation, and Infrastructure \hspace{0.5cm} [ ] Gender Equality \\
+\cline{2-2}
+& [\checkmark] Decent Work and Economic Growth \hspace{1cm} [ ] Climate Action \\
+\hline
+\multirow{4}{3.5cm}{\textbf{Area of specialization}} & 
+[\checkmark] Artificial Intelligence (AI) \hspace{1cm} [ ] Data Science and Analytics \\
+\cline{2-2}
+& [ ] Internet of Things (IoT) \hspace{1cm} [ ] Blockchain \\
+\cline{2-2}
+& [ ] Mobile App Development \hspace{1cm} [\checkmark] Web Development \\
+\cline{2-2}
+& [ ] Cybersecurity \\
+\cline{2-2}
+& [ ] Game Development \hspace{1cm} [\checkmark] Natural Language Processing (NLP) \\
+\cline{2-2}
+& [ ] Other \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+% Group Members Table
+\begin{center}
+\textbf{Project Group Members}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{tabular}{|c|c|p{3.5cm}|c|p{3.5cm}|c|c|}
+\hline
+\textbf{Sr.\#} & \textbf{Reg. \#} & \textbf{Student Name} & \textbf{CGPA} & \textbf{Email ID} & \textbf{Phone \#} \\
+\hline
+(i) & 22k-5146 & M. Talha Yousif (Leader) & 2.76 & k225146@nu.edu.pk & 03164201069 \\[0.8cm]
+\hline
+(ii) & 22k-5114 & Salik Ahmed Bhatti & 2.26 & k5114@nu.edu.pk & 0322332833 \\[0.8cm]
+\hline
+(iii) & 22k-4027 & Toheed Ali & 2.16 & k224027@nu.edu.pk & 03043390057 \\[0.8cm]
+\hline
+\end{tabular}
+
+\vspace{0.5cm}
+
+\textbf{Declaration:} FYP group members have cleared all prerequisite courses for FYP-I as per their degree requirements.
+
+\newpage
+
+% Main content sections
+\section*{Project Abstract }
+\addcontentsline{toc}{section}{Project Abstract}
+
+ORBIS AI is an \textbf{agentic travel planning and booking system} designed to function as a digital travel assistant. It provides users with an intelligent, conversational interface that simplifies complex travel planning workflows—searching and comparing flights, hotels, and activities across providers while generating personalized, day-by-day itineraries based on budget, preferences, and constraints.
+
+The system leverages \textbf{agentic AI architecture}, where specialized agents (Planner, Flight, Hotel, Itinerary, Booking, and Verifier) collaborate to deliver accurate, transparent, and adaptable results. Users can initiate trip planning via natural language chat, receive curated travel bundles, refine itineraries interactively, and confirm reservations through a secure checkout process (sandbox/test mode supported).
+
+Beyond initial booking, ORBIS AI provides real-time trip support such as transit guidance, activity reminders, and change management for flight/hotel modifications. Key features include Google OAuth authentication, preference learning via a cold-start questionnaire, calendar export (ICS), email notifications, and observability dashboards for tracing agent runs.
+
+By combining \textbf{AI-driven orchestration, external travel APIs, and modern web technologies}, ORBIS AI demonstrates how agentic systems can bridge the gap between user intent and fragmented travel services. As a Final Year Project, it not only emphasizes technical implementation but also addresses usability, scalability, and ethical data handling challenges.
+
+\vspace{1cm}
+
+\section*{Previous Project Objectives and Features }
+\addcontentsline{toc}{section}{Previous Project Objectives and Features}
+
+\textit{This section is not applicable as this is a new project, not a continuing project.}
+
+\vspace{1cm}
+
+\section{Introduction }
+
+Travel planning today is fragmented: users must visit multiple platforms for flights, hotels, and activities, manually reconcile prices and rules, and still risk missing optimal options. ORBIS AI addresses this by acting as an \textbf{autonomous travel agent}, capable of understanding natural language queries, breaking them into structured tasks, and integrating results from real APIs.
+
+Objectives include:
+
+\begin{itemize}
+\item Develop a conversational web platform for travel planning.
+\item Implement an \textbf{agentic AI architecture} with specialized agents for flights, hotels, itineraries, and bookings.
+\item Integrate vendor APIs (Amadeus, Booking.com, Stripe sandbox, Google Maps) in test/demo environments.
+\item Provide personalization through user profiles, embeddings, and preference learning.
+\item Ensure security, observability, and compliance (OAuth, encryption, GDPR-style controls).
+\end{itemize}
+
+\section{Success Criterion}
+
+Success is defined as a fully functional demo where:
+
+\begin{enumerate}
+\item A user signs in, initiates a trip request, and receives curated flight + hotel bundles.
+\item The system generates a realistic, day-by-day itinerary within budget and preferences.
+\item The user can hold options, perform a test payment, and receive booking confirmation with an ICS calendar export.
+\item Change requests (e.g., shift departure date) are processed with updated options.
+\end{enumerate}
+
+If these workflows run end-to-end without errors under sandbox APIs, the project will be considered successful.
+
+\section{Related work }
+
+Previous AI-powered travel assistants, such as \textbf{Google Travel} and \textbf{Kayak AI chatbot}, provide partial solutions but lack deep conversational refinement or agent-based orchestration. Academic research highlights the use of \textbf{Retrieval-Augmented Generation (RAG)} for domain-specific planning and \textbf{multi-agent AI} for tool orchestration. Unlike single-model chatbots, ORBIS AI emphasizes \textbf{explainability, schema validation, and modular agents}, making it closer to research systems like LangChain Agents or Microsoft AutoGen but specialized for the travel domain.
+
+\section{Project Rationale}
+
+This project aligns with global demand for smarter, AI-driven personal assistants that reduce time and stress in travel planning. ORBIS AI demonstrates how \textbf{agentic AI can create real-world value}, while also giving the team practical experience in cloud deployment, API integration, and applied NLP—essential skills for both industry and research careers.
+
+\subsection{Aims and Objectives}
+
+\begin{itemize}
+\item Build an AI-powered travel planner with conversational UX.
+\item Implement multi-agent orchestration for planning, search, and booking.
+\item Integrate with real travel APIs in test mode.
+\item Provide secure payments (Stripe sandbox) and confirmations.
+\item Offer itinerary export, notifications, and preference learning.
+\item Ensure observability with logs and traces.
+\end{itemize}
+
+\subsection{Scope of the Project}
+
+\textbf{In Scope:}
+
+\begin{itemize}
+\item Chat-based planning and booking.
+\item Flights + hotels (multi-city support).
+\item Sandbox payment \& booking flows.
+\item User profiles, preferences, and notifications.
+\end{itemize}
+
+\textbf{Out of Scope (MVP):}
+
+\begin{itemize}
+\item Car rentals, travel insurance, corporate travel rules.
+\item Production-grade ticketing compliance.
+\end{itemize}
+
+\section{Proposed Methodology and Architecture}
+
+\textbf{Methodology:}
+
+\begin{itemize}
+\item \textbf{Agile development} with iterative sprints.
+\item \textbf{Agentic AI approach} (Planner, Flight, Hotel, Itinerary, Booking, Verifier agents).
+\item \textbf{RAG for personalization} (vector store with user preferences and static guides).
+\item \textbf{Schema validation} to prevent hallucinations.
+\item \textbf{Testing} via unit, contract, and E2E workflows.
+\end{itemize}
+
+\textbf{Architecture:}
+
+\begin{itemize}
+\item \textbf{Frontend:} Next.js (React, TS) hosted on Vercel.
+\item \textbf{Backend:} Next.js API routes (or NestJS), deployed on Railway/Render.
+\item \textbf{Database:} SurrealDB or Postgres; Redis for caching.
+\item \textbf{APIs:} Amadeus, Booking.com, Stripe test, Google Maps.
+\item \textbf{Observability:} Structured logs, agent run traces, error dashboards.
+\end{itemize}
+
+\section{Individual Tasks }
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{8cm}|p{3cm}|}
+\hline
+\textbf{Team Member} & \textbf{Activity} & \textbf{Tentative Date} \\
+\hline
+\multirow{4}{*}{M. Talha Yousif} & Project lead, orchestrator design & Sep 2025 \\
+\cline{2-3}
+& Itinerary agent development & Oct 2025 \\
+\cline{2-3}
+& Database schema design & Nov 2025 \\
+\cline{2-3}
+& System integration and testing & Dec 2025 \\
+\hline
+\multirow{4}{*}{Salik Ahmed Bhatti}
+& Frontend chat UI development & Sep–Oct 2025 \\
+\cline{2-3}
+
+& Payment system implementation & Nov 2025 \\
+\cline{2-3}
+& Notifications and email system & Dec 2025 \\
+\cline{2-3}
+& API testing and validation & Dec 2025 \\
+\hline
+\multirow{4}{*}{Toheed Ali} 
+& Flight \& hotel agent integration & Sep–Oct 2025 \\
+\cline{2-3}
+& Trip dashboard creation & Nov 2025 \\
+\cline{2-3}
+& Personalization (RAG) implementation & Dec 2025 \\
+\cline{2-3}
+& User experience optimization & Dec 2025 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Gantt Chart }
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=0.9\linewidth]{gant.png}
+	\caption{Gantt Chart}
+\end{figure}
+
+\newpage
+\section{Tools and Technologies}
+
+\begin{itemize}
+\item \textbf{Frontend:} Next.js (TypeScript, React).
+\item \textbf{Backend:} Next.js API routes / NestJS.
+\item \textbf{Database:} SurrealDB / PostgreSQL.
+\item \textbf{Cache:} Redis (Upstash).
+\item \textbf{Vector Store:} pgvector / Elasticsearch.
+\item \textbf{Auth:} NextAuth (Google OAuth).
+\item \textbf{Payments:} Stripe (sandbox).
+\item \textbf{Email:} Resend / SendGrid.
+\item \textbf{Deployment:} Vercel, Railway/Render.
+\item \textbf{Observability:} Logs, traces, dashboards.
+\end{itemize}
+
+\section{References }
+
+[1] Amadeus for Developers. "Travel APIs." [Online]. Available: \url{https://developers.amadeus.com}
+
+[2] Skyscanner. "Flights API." [Online]. Available: \url{https://skyscanner.net/developers}
+
+[3] Booking.com. "Distribution API." [Online]. Available: \url{https://developers.booking.com}
+
+[4] Stripe. "Payment API (Test Mode)." [Online]. Available: \url{https://stripe.com/docs/api}
+
+[5] LangChain. "Building Applications with LLM Agents." [Online]. Available: \url{https://python.langchain.com}
+
+[6] Microsoft Research. "AutoGen: Enabling Next-Gen Multi-Agent AI Systems." In \textit{Proceedings of NeurIPS Workshops}, 2023.
+
+\end{document}

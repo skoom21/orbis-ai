@@ -1,0 +1,1537 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================================
+% PACKAGE IMPORTS
+% ============================================================================
+\usepackage{fontspec}
+\usepackage{geometry}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{ragged2e}
+
+% ============================================================================
+% COLOR DEFINITIONS
+% ============================================================================
+\definecolor{primaryblue}{RGB}{0, 102, 204}
+\definecolor{secondaryblue}{RGB}{51, 153, 255}
+\definecolor{darkgray}{RGB}{64, 64, 64}
+\definecolor{lightgray}{RGB}{245, 245, 245}
+\definecolor{mediumgray}{RGB}{150, 150, 150}
+\definecolor{accentgreen}{RGB}{46, 125, 50}
+\definecolor{warningred}{RGB}{198, 40, 40}
+
+% ============================================================================
+% PAGE GEOMETRY
+% ============================================================================
+\geometry{
+    left=1in,
+    right=1in,
+    top=1.2in,
+    bottom=1in,
+    headheight=24.01996pt
+}
+
+% ============================================================================
+% FONT CONFIGURATION
+% ============================================================================
+\setmainfont{Arial}
+\defaultfontfeatures{Ligatures=TeX}
+
+% ============================================================================
+% SECTION FORMATTING
+% ============================================================================
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{primaryblue}}
+    {\thesection}{1em}{}
+
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{secondaryblue}}
+    {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+    {\normalfont\normalsize\bfseries\color{darkgray}}
+    {\thesubsubsection}{1em}{}
+
+\titlespacing*{\section}{0pt}{2.5ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{2ex plus 1ex minus .2ex}{1ex plus .2ex}
+
+% ============================================================================
+% HYPERLINK SETUP
+% ============================================================================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    filecolor=primaryblue,
+    urlcolor=secondaryblue,
+    pdfauthor={M. Talha Yousif, Salik Ahmed Bhatti, Toheed Ali},
+    pdftitle={Software Requirement Specifications for Orbis AI},
+    pdfsubject={Final Year Project SRS},
+    pdfkeywords={Orbis AI, Travel Planning, Agentic AI, FYP}
+}
+
+% ============================================================================
+% HEADER AND FOOTER
+% ============================================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{mediumgray}Orbis AI - SRS Document}
+\fancyhead[R]{\small\color{mediumgray}Version 1.5}
+\fancyfoot[C]{\color{mediumgray}\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{lightgray}\leaders\hrule height \headrulewidth\hfill}}
+
+% ============================================================================
+% CUSTOM ENVIRONMENTS
+% ============================================================================
+\tcbuselibrary{skins}
+
+\newtcolorbox{infobox}[1][]{
+    colback=lightgray,
+    colframe=primaryblue,
+    fonttitle=\bfseries,
+    coltitle=white,
+    boxrule=1pt,
+    arc=3mm,
+    title=#1
+}
+
+\newtcolorbox{highlightbox}{
+    colback=secondaryblue!10,
+    colframe=secondaryblue,
+    boxrule=0.5pt,
+    arc=2mm,
+    left=5pt,
+    right=5pt,
+    top=5pt,
+    bottom=5pt
+}
+
+% ============================================================================
+% CUSTOM COMMANDS
+% ============================================================================
+\newcommand{\sectionbreak}{\vspace{1em}}
+
+% Custom table column types
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+
+\begin{document}
+
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    % Title
+    {\Huge\bfseries\color{primaryblue}Software Requirement\\[0.3cm]Specifications\par}
+    \vspace{1cm}
+    {\LARGE\color{darkgray}Orbis AI - Intelligent Travel Planning System\par}
+    \vspace{2cm}
+    
+    % Version box
+    \begin{tcolorbox}[
+        colback=primaryblue!5,
+        colframe=primaryblue,
+        width=10cm,
+        arc=3mm,
+        boxrule=1pt
+    ]
+        \centering
+        {\Large\textbf{Version 1.5}}\\[0.3cm]
+        {\large Final Year Project}
+    \end{tcolorbox}
+    
+    \vspace{2cm}
+    
+    % Project information table
+\newcommand{\myrule}{\noalign{\vskip 2pt}\hline\noalign{\vskip 2pt}}
+
+\begin{tcolorbox}[
+    colback=white,
+    colframe=primaryblue,
+    width=15cm,
+    arc=3mm,
+    boxrule=1.5pt
+]
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \textbf{\color{primaryblue}Project ID} & F25-54 \\ \myrule
+        \textbf{\color{primaryblue}Supervisor} & Ms. Bakhtawar Abbasi \\ \myrule
+        \textbf{\color{primaryblue}Co-Supervisor} & --- \\ \myrule
+        \textbf{\color{primaryblue}Project Team} & M. Talha Yousif (Leader)\\
+        & Salik Ahmed Bhatti\\
+        & Toheed Ali \\ \myrule
+        \textbf{\color{primaryblue}Submission Date} & November 30, 2025 \\
+    \end{tabular}
+\end{tcolorbox}
+
+
+    
+    \vfill
+    
+    {\large\color{mediumgray}National University of Computer \& Emerging Sciences\\
+    FAST-NUCES\par}
+    
+\end{titlepage}
+
+% Reset page numbering
+\pagenumbering{roman}
+
+% ============================================================================
+% DOCUMENT HISTORY
+% ============================================================================
+\section*{Document History}
+\addcontentsline{toc}{section}{Document History}
+
+\noindent\textit{This section maintains a comprehensive revision history to track all changes made to the document.}
+
+\vspace{0.5cm}
+
+\begin{longtable}{|C{1.5cm}|L{3.5cm}|C{2.5cm}|L{5.5cm}|}
+    \hline
+    \textbf{Version} & \textbf{Author} & \textbf{Date} & \textbf{Description of Change} \\
+    \hline
+    \endfirsthead
+    
+    \hline
+    \textbf{Version} & \textbf{Author} & \textbf{Date} & \textbf{Description of Change} \\
+    \hline
+    \endhead
+    
+    1.0 & M. Talha Yousif & 29/11/2025 & Initial document creation and structure setup \\
+    \hline
+    1.1 & M. Talha Yousif & 29/11/2025 & Introduction section completed with objectives \\
+    \hline
+    1.2 & Salik Ahmed Bhatti & 29/11/2025 & Project scope and exclusions defined \\
+    \hline
+    1.3 & Toheed Ali & 29/11/2025 & System constraints and interface requirements \\
+    \hline
+    1.4 & M. Talha Yousif & 30/11/2025 & Use case diagram and functional/non-functional requirements \\
+    \hline
+    1.5 & Project Team & 30/11/2025 & References added and comprehensive document review \\
+    \hline
+\end{longtable}
+
+% ============================================================================
+% DISTRIBUTION LIST
+% ============================================================================
+\section*{Distribution List}
+\addcontentsline{toc}{section}{Distribution List}
+
+\noindent\textit{The following individuals will receive this document after each official sign-off.}
+
+\vspace{0.5cm}
+
+\begin{longtable}{|L{6cm}|L{7cm}|}
+    \hline
+    \textbf{Name} & \textbf{Role} \\
+    \hline
+    \endfirsthead
+    
+    \hline
+    \textbf{Name} & \textbf{Role} \\
+    \hline
+    \endhead
+    
+    Ms. Bakhtawar Abbasi & Project Supervisor \\
+    \hline
+    --- & Co-Supervisor \\
+    \hline
+    M. Talha Yousif & Project Leader \\
+    \hline
+    Salik Ahmed Bhatti & Team Member \\
+    \hline
+    Toheed Ali & Team Member \\
+    \hline
+\end{longtable}
+
+% ============================================================================
+% DOCUMENT SIGN-OFF
+% ============================================================================
+\section*{Document Sign-Off}
+\addcontentsline{toc}{section}{Document Sign-Off}
+
+\noindent\textit{This section records the official approval of the document by the designated authorities.}
+
+\vspace{0.5cm}
+
+\begin{longtable}{|C{2.5cm}|L{6cm}|C{4cm}|}
+    \hline
+    \textbf{Version} & \textbf{Sign-off Authority} & \textbf{Sign-off Date} \\
+    \hline
+    \endfirsthead
+    
+    \hline
+    \textbf{Version} & \textbf{Sign-off Authority} & \textbf{Sign-off Date} \\
+    \hline
+    \endhead
+    
+    1.5 & Supervisor & 30/11/2025 \\
+    \hline
+    & & \\
+    \hline
+\end{longtable}
+
+\newpage
+
+% ============================================================================
+% TABLE OF CONTENTS
+% ============================================================================
+\tableofcontents
+\newpage
+
+% Reset page numbering to arabic
+\pagenumbering{arabic}
+
+% ============================================================================
+% SECTION 1: INTRODUCTION
+% ============================================================================
+\section{Introduction}
+
+\subsection{Purpose of Document}
+
+This Software Requirements Specification (SRS) document provides a comprehensive and structured outline of the functional and non-functional requirements for the \textbf{Orbis AI} system. It serves as the definitive reference for all project stakeholders throughout the system's development lifecycle.
+
+\begin{highlightbox}
+\textbf{Key Objectives:}
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Establish a clear communication framework among all stakeholders
+    \item Serve as the primary reference for system design, implementation, and testing
+    \item Ensure alignment between system implementation and business objectives
+    \item Provide a foundation for requirement traceability throughout the project
+\end{itemize}
+\end{highlightbox}
+
+\subsection{Intended Audience}
+
+This document is designed for the following stakeholders:
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Academic Stakeholders:} FAST-NUCES administration, jury members, and students
+    \item \textbf{Project Team:} Designers, developers, and testers
+    \item \textbf{Supervision:} Ms. Bakhtawar Abbasi (Project Supervisor)
+    \item \textbf{End Users:} Potential users and early adopters of Orbis AI
+\end{itemize}
+
+\subsection{Abbreviations}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{L{3cm}L{10cm}}
+    \toprule
+    \textbf{Abbreviation} & \textbf{Definition} \\
+    \midrule
+    AI & Artificial Intelligence \\
+    API & Application Programming Interface \\
+    ICS & iCalendar Standard \\
+    LLM & Large Language Model \\
+    MARL & Multi-Agent Reinforcement Learning \\
+    NLP & Natural Language Processing \\
+    OAuth & Open Authorization \\
+    RAG & Retrieval-Augmented Generation \\
+    UX & User Experience \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Document Conventions}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Font Family:} Arial
+    \item \textbf{Font Size:} 12pt for headings, 10-11pt for body text
+    \item \textbf{Color Coding:} Blue for primary headings, gray for secondary information
+    \item \textbf{Emphasis:} Bold text for key terms and important concepts
+\end{itemize}
+
+% ============================================================================
+% SECTION 2: OVERALL SYSTEM DESCRIPTION
+% ============================================================================
+\section{Overall System Description}
+
+\subsection{Project Background}
+
+Modern travel planning suffers from significant fragmentation. Users must navigate multiple platforms for flights, accommodations, and activities, manually reconcile pricing and policies, and risk missing optimal options due to information overload.
+
+\begin{infobox}[Problem Statement]
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Fragmented Services:} Inefficient planning across multiple disconnected platforms
+    \item \textbf{Lack of Personalization:} Limited real-time adaptation to user preferences
+    \item \textbf{Complexity:} Difficult comparison and booking across providers
+    \item \textbf{Trust Issues:} Need for transparent, ethical AI in handling sensitive user data
+\end{itemize}
+\end{infobox}
+
+\textbf{Orbis AI Solution:} An autonomous travel agent leveraging agentic AI to understand natural language queries, decompose them into structured tasks, and integrate results from real-time APIs to deliver personalized, optimized travel itineraries.
+\newpage
+\subsection{Project Scope}
+
+Orbis AI aims to revolutionize travel planning through intelligent AI orchestration, providing transparency, efficiency, and deep personalization.
+
+\subsubsection{Included Functionalities}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Conversational Interface:} Natural language-based travel planning via chat
+    \item \textbf{AI Orchestration:} Intelligent coordination of flights, hotels, and itineraries
+    \item \textbf{API Integration:} Amadeus, Booking.com, Stripe sandbox, Google Maps
+    \item \textbf{Personalization Engine:} Preference learning through questionnaires and embeddings
+    \item \textbf{Real-Time Support:} Dynamic trip management, notifications, and change handling
+    \item \textbf{Sandbox Payments:} Demo-only transactions with no real charges
+    \item \textbf{MARL Optimization:} Multi-Agent Reinforcement Learning for optimal planning
+    \item \textbf{Multi-Modal Summaries:} LLM-powered trip visualization with text, maps, and images
+    \item \textbf{Dynamic Re-Planning:} Real-time constraint solver for itinerary adjustments
+    \item \textbf{Future Features:} Admin panel for analytics, logs, and system audits
+\end{itemize}
+
+\subsubsection{Excluded Functionalities}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Car rentals and travel insurance services
+    \item Corporate travel management and compliance rules
+    \item Production-grade ticketing with full regulatory compliance
+\end{itemize}
+
+\subsection{Not In Scope}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Real-time API response verification beyond sandbox environments
+    \item Production-scale user load handling
+    \item Manual booking verification or full production compliance
+\end{itemize}
+
+\subsection{Project Objectives}
+
+\subsubsection{User Functions}
+
+\begin{enumerate}[leftmargin=*, itemsep=0.3em]
+    \item Initiate trip planning through natural language conversations
+    \item Receive AI-curated travel bundles (flights, hotels, activities)
+    \item Interactively refine itineraries based on personal preferences
+    \item Execute test bookings with sandbox payment processing
+    \item Export itineraries to calendar format (ICS)
+    \item Receive automated email notifications
+    \item Access real-time support for trip modifications
+\end{enumerate}
+
+\subsubsection{Success Criteria}
+
+\begin{highlightbox}
+\textbf{Core Success Metrics:}
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item User successfully signs in and initiates trip request
+    \item System generates curated flight and hotel bundles
+    \item Realistic day-by-day itinerary created within budget constraints
+    \item Test payment processed with booking confirmation
+    \item ICS calendar export successfully generated
+    \item Change requests processed with updated options
+\end{itemize}
+\end{highlightbox}
+
+\textbf{Advanced Features:}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{MARL Implementation:} Reinforcement learning agents dynamically negotiate between flight, hotel, and itinerary agents to optimize cost, travel time, and user satisfaction
+    \item \textbf{Multi-Modal Summaries:} LLM-powered generation combining text, annotated maps, and landmark images for rich trip visualization
+    \item \textbf{Real-Time Optimization:} Constraint solver maintains feasible itineraries during dynamic changes (delays, weather, preference updates)
+\end{itemize}
+
+\subsubsection{Admin Functions (Future)}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Access observability dashboards for agent execution monitoring
+    \item Audit user interactions and system performance metrics
+\end{itemize}
+
+\subsection{Stakeholders}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{L{4cm}L{9cm}}
+    \toprule
+    \textbf{Stakeholder} & \textbf{Interest} \\
+    \midrule
+    Travelers & End users seeking simplified travel planning \\
+    Development Team & System designers, developers, and testers \\
+    Supervisor & Academic oversight and guidance \\
+    FAST-NUCES & Institutional stakeholder \\
+    API Providers & Amadeus, Booking.com, Stripe, Google \\
+    Potential Investors & Future commercialization opportunities \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Operating Environment}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Platform:} Web-based application with internet connectivity requirement
+    \item \textbf{Browsers:} Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+    \item \textbf{APIs:} Sandbox mode API keys for all third-party integrations
+    \item \textbf{Deployment:} Vercel/Railway with database connectivity
+    \item \textbf{Database:} SurrealDB or PostgreSQL with pgvector extension
+\end{itemize}
+
+\subsection{System Constraints}
+
+\begin{infobox}[Technical Constraints]
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Database:} SurrealDB or PostgreSQL
+    \item \textbf{AI Frameworks:} LangChain, Microsoft AutoGen
+    \item \textbf{Third-Party APIs:} Amadeus, Booking.com, Stripe (sandbox), Google Maps
+    \item \textbf{Network Dependency:} All features require stable internet connectivity
+    \item \textbf{API Limitations:} Subject to rate limits and potential downtime
+\end{itemize}
+\end{infobox}
+
+\begin{infobox}[Design Constraints]
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Language:} English as primary interface language
+    \item \textbf{Ethical AI:} Bias mitigation in recommendation algorithms
+    \item \textbf{UX Requirements:} Intuitive interface for diverse user backgrounds
+\end{itemize}
+\end{infobox}
+
+\subsection{Assumptions \& Dependencies}
+
+\subsubsection{Assumptions}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Users provide accurate preferences and travel constraints
+    \item Sandbox API behavior mirrors production environments
+    \item Users possess basic web navigation skills
+    \item System used for demonstration purposes only (no real payments)
+\end{itemize}
+
+\subsubsection{Dependencies}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{External APIs:} Availability and rate limit compliance
+    \item \textbf{Frontend Framework:} Next.js with React and TypeScript
+    \item \textbf{Caching:} Redis for performance optimization
+    \item \textbf{Authentication:} NextAuth with OAuth 2.0 support
+\end{itemize}
+
+% ============================================================================
+% SECTION 3: EXTERNAL INTERFACE REQUIREMENTS
+% ============================================================================
+\section{External Interface Requirements}
+
+\subsection{Hardware Interfaces}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{L{5cm}L{8cm}}
+    \toprule
+    \textbf{Component} & \textbf{Requirement} \\
+    \midrule
+    Desktop/Laptop & Minimum 4GB RAM, modern processor \\
+    Mobile Devices & iOS 13+, Android 8.0+ \\
+    Internet Connection & Minimum 2 Mbps recommended \\
+    Display & Minimum 1280×720 resolution \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Software Interfaces}
+
+\begin{longtable}{|L{4cm}|L{9cm}|}
+    \hline
+    \textbf{Component} & \textbf{Description} \\
+    \hline
+    \endfirsthead
+    
+    \hline
+    \textbf{Component} & \textbf{Description} \\
+    \hline
+    \endhead
+    
+    Database System & SurrealDB/PostgreSQL for persistent storage \\
+    \hline
+    Web Framework & Next.js for frontend and backend \\
+    \hline
+    Flight API & Amadeus Travel APIs for flight search \\
+    \hline
+    Hotel API & Booking.com Distribution API \\
+    \hline
+    Payment Gateway & Stripe (sandbox mode) \\
+    \hline
+    Mapping Service & Google Maps API \\
+    \hline
+    Authentication & NextAuth (Google OAuth + Email/Password) \\
+    \hline
+    Email Service & Resend/SendGrid for notifications \\
+    \hline
+    Vector Store & pgvector/Elasticsearch for embeddings \\
+    \hline
+\end{longtable}
+
+\subsection{Communications Interfaces}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Data Format:} JSON for API data exchange
+    \item \textbf{Real-Time:} WebSockets for chat functionality
+    \item \textbf{Security:} HTTPS/TLS 1.3 for all communications
+    \item \textbf{Synchronization:} Automatic real-time data sync
+\end{itemize}
+
+% ============================================================================
+% SECTION 4: FUNCTIONAL REQUIREMENTS
+% ============================================================================
+\newpage 
+\section{Functional Requirements}
+
+\subsection{Functional Hierarchy}
+
+\begin{infobox}[System Architecture Overview]
+The Orbis AI system is organized into seven major functional modules, each containing specialized sub-functions for comprehensive travel planning capabilities.
+\end{infobox}
+
+\subsubsection{Module 1: User Management}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 1.1 User Registration
+    \item 1.2 User Login (OAuth/Email)
+    \item 1.3 Profile Management
+    \item 1.4 Preference Viewing
+\end{itemize}
+
+\subsubsection{Module 2: Trip Planning}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 2.1 Chat Session Initiation
+    \begin{itemize}[leftmargin=1.5cm, itemsep=0.1em]
+        \item 2.1.1 Cold-Start Questionnaire
+        \item 2.1.2 Natural Language Query Processing
+    \end{itemize}
+    \item 2.2 Itinerary Generation
+    \begin{itemize}[leftmargin=1.5cm, itemsep=0.1em]
+        \item 2.2.1 Flight Search
+        \item 2.2.2 Hotel Search
+        \item 2.2.3 Activity Recommendations
+    \end{itemize}
+    \item 2.3 Itinerary Refinement
+    \item 2.4 Real-Time Support
+    \item 2.5 Multi-Modal Summary Generation
+\end{itemize}
+
+\subsubsection{Module 3: Booking Management}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 3.1 Bundle Confirmation
+    \item 3.2 Test Payment Processing (Sandbox)
+    \item 3.3 Option Holding
+    \item 3.4 Change Request Handling
+\end{itemize}
+
+\subsubsection{Module 4: Personalization}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 4.1 Preference Learning (RAG)
+    \item 4.2 Embeddings Update
+\end{itemize}
+
+\subsubsection{Module 5: Notifications \& Exports}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 5.1 Email Notifications
+    \item 5.2 ICS Calendar Export
+    \item 5.3 Trip Reminders
+\end{itemize}
+
+\subsubsection{Module 6: Agentic AI}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 6.1 Planner Agent
+    \item 6.2 Flight Agent
+    \item 6.3 Hotel Agent
+    \item 6.4 Itinerary Agent
+    \item 6.5 Booking Agent
+    \item 6.6 Verifier Agent
+    \item 6.7 MARL Optimization
+    \item 6.8 Constraint Solver
+\end{itemize}
+
+\subsubsection{Module 7: Admin Panel (Future)}
+
+\begin{itemize}[leftmargin=*, itemsep=0.2em]
+    \item 7.1 Log Viewing
+    \item 7.2 Audit Dashboard
+\end{itemize}
+
+\newpage
+\subsection{Use Cases}
+
+\subsubsection{Use Case Diagram}
+
+\begin{center}
+\includegraphics[width=1\textwidth]{usecase_diagram3.png}
+\end{center}
+
+
+\newpage
+
+\subsubsection{UC-01: User Registration \& Login}
+
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-01 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & User Registration and Authentication via Google OAuth or Email/Password \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=*, nosep]
+        \item User has valid Google account or email address
+        \item System is online and accessible
+        \item Authentication service is operational
+    \end{itemize} \\
+    \hline
+\end{longtable}
+
+\textbf{Main Scenario:}
+
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    \endfirsthead
+    
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    \endhead
+    
+    1 & User navigates to login page & Displays authentication options (OAuth, Email) \\
+    \hline
+    2 & User selects authentication method & Redirects to OAuth provider or displays login form \\
+    \hline
+    3 & User submits credentials & Validates credentials and authenticates user \\
+    \hline
+    4 & N/A & Creates user profile if new user \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{3a - Invalid Credentials:} System displays error message with retry option
+    \item \textbf{4a - Existing User:} System logs user in directly to dashboard
+    \item \textbf{2a - OAuth Failure:} System handles provider errors gracefully and falls back to alternative methods
+    \item \textbf{Network Issue:} System displays connection error and suggests retry
+\end{itemize}
+
+\textbf{Postconditions:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item User is authenticated and session is established
+    \item User is redirected to personalized dashboard
+    \item User preferences are loaded if existing
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-02: Start New Trip Planning
+    \item UC-03: Fill Cold-Start Questionnaire
+    \item UC-11: Update User Preferences
+\end{itemize}
+
+\subsubsection{UC-02: Start New Trip Planning (Chat)}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-02 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Initiate trip planning via conversational chat interface \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item User is authenticated
+        \item No active trip planning session exists
+        \item APIs are available in sandbox mode
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User opens chat interface & Displays welcome message and prompt for trip details \\
+    \hline
+    2 & User enters natural language query (e.g., "Plan a trip to Paris for 5 days") & Planner agent parses query and initiates specialized agents \\
+    \hline
+    3 & N/A & Generates initial travel bundles using integrated APIs \\
+    \hline
+    4 & N/A & Presents options with personalized recommendations \\
+    \hline
+\end{longtable}
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{2a - Ambiguous Query:} System asks clarifying questions
+    \item \textbf{3a - API Failure:} System uses cached data or notifies user of delay
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Trip planning session is active
+    \item Initial itinerary bundles are displayed
+    \item User preferences are applied
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-03: Fill Cold-Start Questionnaire
+    \item UC-04: Refine Itinerary Interactively
+    \item UC-12: Multi-City Flight Search
+\end{itemize}
+
+\newpage
+\subsubsection{UC-03: Fill Cold-Start Questionnaire}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-03 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Complete initial preference questionnaire for personalization \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item New user or no preferences set
+        \item User is authenticated
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & N/A & System prompts questionnaire upon first login \\
+    \hline
+    2 & User responds to questions (budget, interests, etc.) & Validates responses in real-time \\
+    \hline
+    3 & User submits questionnaire & Stores responses in vector store \\
+    \hline
+    4 & N/A & Generates initial embeddings for personalization \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{2a - Skip Question:} System applies default values
+    \item \textbf{3a - Incomplete Submission:} System saves partial data and allows later completion
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item User preferences are saved
+    \item RAG system is initialized for user
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-01: User Registration \& Login
+    \item UC-11: Update User Preferences
+\end{itemize}
+\newpage
+\subsubsection{UC-04: Refine Itinerary Interactively}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-04 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Interactively modify and refine proposed itinerary \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Initial itinerary generated
+        \item Active planning session
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User requests modification (e.g., "Change hotel to cheaper option") & Itinerary agent analyzes request \\
+    \hline
+    2 & N/A & Requeries APIs for updated options \\
+    \hline
+    3 & N/A & Presents revised bundles with explanations \\
+    \hline
+    4 & User confirms changes & Updates session state \\
+    \hline
+\end{longtable}
+
+\vspace{0.3em}
+\textbf{Alternate Scenarios:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{1a - Invalid Request:} System suggests valid alternatives
+    \item \textbf{2a - Constraint Violation:} Notifies user of conflicts (e.g., budget exceed)
+\end{itemize}
+
+\vspace{0.3em}
+\textbf{Postconditions:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Itinerary is updated
+    \item Changes are persisted in session
+\end{itemize}
+
+\vspace{0.3em}
+\textbf{Cross-Referenced Use Cases:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-02: Start New Trip Planning
+    \item UC-05: Generate Day-by-Day Itinerary
+    \item UC-09: Request Trip Change
+\end{itemize}
+
+\newpage
+\subsubsection{UC-05: Generate Day-by-Day Itinerary}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-05 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Generate detailed day-by-day travel itinerary \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Travel bundles selected
+        \item Preferences applied
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User requests itinerary generation & Itinerary agent compiles data \\
+    \hline
+    2 & N/A & Integrates activities and routes via Google Maps \\
+    \hline
+    3 & N/A & Applies MARL for optimization \\
+    \hline
+    4 & N/A & Displays detailed day-by-day plan \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{3a - Optimization Failure:} Falls back to rule-based planning
+    \item \textbf{2a - No Activities:} Suggests additions based on preferences
+\end{itemize}
+
+\textbf{Postconditions:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Complete itinerary generated
+    \item Ready for booking or further refinement
+
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-04: Refine Itinerary Interactively
+    \item UC-06: Confirm Booking with Test Payment
+    \item UC-13: Hotel Comparison
+\end{itemize}
+
+\newpage
+\subsubsection{UC-06: Confirm Booking with Test Payment}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-06 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Confirm travel bundle with sandbox payment processing \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Itinerary finalized
+        \item Stripe sandbox configured
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User selects confirm booking & Redirects to secure checkout page \\
+    \hline
+    2 & User enters test payment details & Processes transaction in sandbox mode (no real charge) \\
+    \hline
+    3 & N/A & Generates booking confirmation \\
+    \hline
+    4 & N/A & Triggers email notification and ICS export \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{2a - Payment Decline:} Simulates decline and allows retry
+    \item \textbf{1a - Hold Option:} Temporarily reserves without payment
+\end{itemize}
+
+\textbf{Postconditions:}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Booking confirmed in demo mode
+    \item All documents generated
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-05: Generate Day-by-Day Itinerary
+    \item UC-07: Export Itinerary to Calendar (ICS)
+    \item UC-08: Receive Email Notification
+\end{itemize}
+\newpage
+\subsubsection{UC-07: Export Itinerary to Calendar (ICS)}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-07 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Export confirmed itinerary to ICS calendar format \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Booking confirmed
+        \item Itinerary details available
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User selects export option & Generates ICS file from itinerary data \\
+    \hline
+    2 & User downloads or adds to calendar & Provides download link or direct integration \\
+    \hline
+    3 & N/A & Confirms successful export \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{1a - Format Error:} Validates and regenerates file
+    \item \textbf{2a - Calendar Integration Fail:} Provides manual import instructions
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item ICS file generated and available
+    \item Itinerary events added to user's calendar
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-06: Confirm Booking with Test Payment
+    \item UC-05: Generate Day-by-Day Itinerary
+\end{itemize}
+
+\newpage
+\subsubsection{UC-08: Receive Email Notification}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-08 \\
+    \hline
+    \textbf{Actors} & User (Primary), System (Secondary) \\
+    \hline
+    \textbf{Feature} & Send automated email notifications for trip updates \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Event trigger (e.g., booking confirmation)
+        \item User email verified
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & N/A & Detects notification trigger event \\
+    \hline
+    2 & N/A & Composes personalized email with details \\
+    \hline
+    3 & N/A & Sends via email provider (Resend/SendGrid) \\
+    \hline
+    4 & User receives email & Logs delivery status \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{3a - Delivery Failure:} Retries send or logs error
+    \item \textbf{2a - Custom Template:} Uses different templates for event types
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Notification delivered
+    \item User informed of updates
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-06: Confirm Booking with Test Payment
+    \item UC-09: Request Trip Change
+\end{itemize}
+
+\newpage
+\subsubsection{UC-09: Request Trip Change}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-09 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Process real-time changes to existing trip plans \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Active or confirmed trip exists
+        \item Change constraints feasible
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User submits change request (e.g., "Shift departure by 2 days") & Constraint solver evaluates impact \\
+    \hline
+    2 & N/A & Re-plans itinerary using MARL agents \\
+    \hline
+    3 & N/A & Presents updated options with cost differences \\
+    \hline
+    4 & User approves & Applies changes and notifies via email \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{2a - Infeasible Change:} Suggests closest alternatives
+    \item \textbf{1a - External Trigger:} Handles automatic changes (e.g., flight delay)
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Trip updated successfully
+    \item New itinerary persisted
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-04: Refine Itinerary Interactively
+    \item UC-08: Receive Email Notification
+\end{itemize}
+\newpage
+\subsubsection{UC-10: View Past Trips}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-10 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Access and review history of planned trips \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item User has completed trips
+        \item Authenticated session
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User navigates to history section & Retrieves trips from database \\
+    \hline
+    2 & User selects specific trip & Displays detailed itinerary and bookings \\
+    \hline
+    3 & User requests export & Generates summary or ICS file \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{1a - No History:} Displays message "No past trips available"
+    \item \textbf{2a - Data Error:} Handles gracefully with retry option
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Trip details displayed
+    \item Optional export completed
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-01: User Registration \& Login
+    \item UC-07: Export Itinerary to Calendar (ICS)
+\end{itemize}
+\newpage
+\subsubsection{UC-11: Update User Preferences}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-11 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Modify and update personal travel preferences \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item User authenticated
+        \item Profile exists
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User accesses profile settings & Displays current preferences \\
+    \hline
+    2 & User modifies preferences & Validates changes in real-time \\
+    \hline
+    3 & User saves updates & Updates vector store and embeddings \\
+    \hline
+    4 & N/A & Applies changes to active sessions \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{2a - Invalid Input:} Displays validation errors
+    \item \textbf{3a - Partial Save:} Saves valid changes only
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Preferences updated
+    \item Future recommendations adjusted
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-03: Fill Cold-Start Questionnaire
+    \item UC-01: User Registration \& Login
+\end{itemize}
+\newpage
+\subsubsection{UC-12: Multi-City Flight Search}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-12 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Perform flight search for multi-city itineraries \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Active planning session
+        \item Multi-city route specified
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User specifies multi-city details & Flight agent queries Amadeus API \\
+    \hline
+    2 & N/A & Filters results based on preferences \\
+    \hline
+    3 & N/A & Displays comparison table \\
+    \hline
+    4 & User selects option & Integrates into itinerary \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{1a - No Results:} Suggests alternative routes
+    \item \textbf{2a - Price Filter:} Applies budget constraints
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Flight segments added
+    \item Itinerary updated
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-02: Start New Trip Planning
+    \item UC-05: Generate Day-by-Day Itinerary
+\end{itemize}
+\newpage
+\subsubsection{UC-13: Hotel Comparison}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-13 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Compare hotel options based on multiple criteria \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Destination specified
+        \item Dates available
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User requests hotel options & Hotel agent queries Booking.com API \\
+    \hline
+    2 & N/A & Applies filters (price, location, ratings) \\
+    \hline
+    3 & N/A & Displays comparison matrix \\
+    \hline
+    4 & User selects hotel & Adds to itinerary bundle \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{1a - No Availability:} Suggests alternatives or date changes
+    \item \textbf{3a - Custom Sort:} Allows user-defined sorting
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Hotel selected
+    \item Bundle updated
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-05: Generate Day-by-Day Itinerary
+    \item UC-04: Refine Itinerary Interactively
+\end{itemize}
+\newpage
+\subsubsection{UC-14: Generate Multi-Modal Summary}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-14 \\
+    \hline
+    \textbf{Actors} & User (Primary) \\
+    \hline
+    \textbf{Feature} & Generate visual and textual trip summary using LLM \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Itinerary complete
+        \item Multi-modal APIs available
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & User requests summary & LLM processes itinerary data \\
+    \hline
+    2 & N/A & Integrates maps, images, and annotations \\
+    \hline
+    3 & N/A & Displays interactive multi-modal view \\
+    \hline
+    4 & User interacts & Updates view dynamically \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{2a - API Unavailable:} Falls back to text-only summary
+    \item \textbf{3a - Export Request:} Generates shareable format
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Summary generated
+    \item Enhanced user understanding
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-05: Generate Day-by-Day Itinerary
+    \item UC-07: Export Itinerary to Calendar (ICS)
+\end{itemize}
+\newpage
+\subsubsection{UC-15: Admin View Observability Dashboard (Future)}
+\begin{longtable}{|L{3.5cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Use Case Specification}} \\
+    \hline
+    \textbf{Use Case ID} & UC-15 \\
+    \hline
+    \textbf{Actors} & Admin (Primary) \\
+    \hline
+    \textbf{Feature} & View system logs and performance traces \\
+    \hline
+    \textbf{Preconditions} & \begin{itemize}[leftmargin=1.5cm, nosep]
+        \item Admin authenticated
+        \item Dashboard enabled
+    \end{itemize} \\
+    \hline
+\end{longtable}
+\textbf{Main Scenario:}
+\begin{longtable}{|C{1.5cm}|L{5.5cm}|L{6cm}|}
+    \hline
+    \textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+    \hline
+    1 & Admin accesses dashboard & Displays real-time metrics and logs \\
+    \hline
+    2 & Admin applies filters & Queries and shows filtered data \\
+    \hline
+    3 & Admin views agent traces & Displays detailed run information \\
+    \hline
+    4 & Admin exports report & Generates downloadable summary \\
+    \hline
+\end{longtable}
+
+\textbf{Alternate Scenarios:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item \textbf{1a - Unauthorized Access:} Denies entry and logs attempt
+    \item \textbf{2a - No Data:} Displays "No recent activity" message
+\end{itemize}
+
+\textbf{Postconditions:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item Dashboard viewed successfully
+    \item System insights gained
+\end{itemize}
+
+\textbf{Cross-Referenced Use Cases:}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+    \item UC-01: User Registration \& Login
+\end{itemize}
+\newpage
+% ============================================================================
+% SECTION 5: NON-FUNCTIONAL REQUIREMENTS
+% ============================================================================
+\section{Non-functional Requirements}
+\subsection{Performance Requirements}
+\begin{infobox}[Performance Metrics]
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Concurrency:} Support up to 10 simultaneous users without degradation
+    \item \textbf{Response Time:} Itinerary generation within 5 seconds
+    \item \textbf{API Latency:} External calls complete in under 10 seconds average
+    \item \textbf{AI Processing:} Orchestration results in 20 seconds or less
+    \item \textbf{Transaction Time:} Sandbox confirmations within 15 seconds
+    \item \textbf{Uptime:} 95\% availability for demonstration environments
+\end{itemize}
+\end{infobox}
+\subsection{Safety Requirements}
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Implement automated database backups to prevent data loss
+    \item Robust error handling to maintain system stability
+    \item Schema validation to prevent AI hallucinations
+    \item Compliance with ethical data handling practices (GDPR-inspired)
+    \item Fallback mechanisms for API failures
+\end{itemize}
+\subsection{Security Requirements}
+\begin{infobox}[Security Controls]
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Authentication:} Google OAuth and email/password with secure hashing
+    \item \textbf{Encryption:} Standard encryption for sensitive data (API keys, preferences)
+    \item \textbf{Access Control:} Role-based for future admin features
+    \item \textbf{Communications:} Mandatory HTTPS for all interactions
+    \item \textbf{Privacy:} No data sharing without explicit user consent
+\end{itemize}
+\end{infobox}
+\subsection{User Documentation}
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item Comprehensive User Manual covering all features
+    \item Integrated Online Help with contextual tooltips
+    \item Video Tutorials for key workflows (e.g., chat interface)
+    \item Context-Sensitive Guidance for complex operations
+    \item Troubleshooting Guide for common issues
+\end{itemize}
+% ============================================================================
+% SECTION 6: REFERENCES
+% ============================================================================
+\section{References}
+\begin{enumerate}[leftmargin=*, itemsep=0.3em]
+    \item Amadeus for Developers. "Travel APIs." [Online]. Available: \url{https://developers.amadeus.com}
+    \item Skyscanner. "Flights API." [Online]. Available: \url{https://skyscanner.net/developers}
+    \item Booking.com. "Distribution API." [Online]. Available: \url{https://developers.booking.com}
+    \item Stripe. "Payment API (Test Mode)." [Online]. Available: \url{https://stripe.com/docs/api}
+    \item LangChain. "Building Applications with LLM Agents." [Online]. Available: \url{https://python.langchain.com}
+    \item Microsoft Research. "AutoGen: Enabling Next-Gen Multi-Agent AI Systems." In Proceedings of NeurIPS Workshops, 2023.
+\end{enumerate}
+% ============================================================================
+% SECTION 7: APPENDICES
+% ============================================================================
+\section{Appendices}
+\noindent\textit{This section includes supplementary materials that support the main document content.}
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Appendix A:} Detailed System Architecture Diagram
+    \item \textbf{Appendix B:} API Integration Specifications
+    \item \textbf{Appendix C:} Data Models and Schemas
+    \item \textbf{Appendix D:} Test Case Templates
+\end{itemize}
+
+
+\end{document}
