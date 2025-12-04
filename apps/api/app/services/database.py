@@ -118,6 +118,45 @@ class DatabaseService:
             logger.error("Error getting user by email", email=email, error=str(e))
             return None
     
+    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user by ID."""
+        try:
+            if not self.supabase:
+                return None
+            
+            result = self.supabase.table("users").select("*").eq("id", user_id).execute()
+            
+            if result.data:
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            logger.error("Error getting user by id", user_id=user_id, error=str(e))
+            return None
+    
+    async def update_user(self, user_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update user information."""
+        try:
+            if not self.supabase:
+                return None
+            
+            # Add updated_at timestamp
+            update_data["updated_at"] = datetime.utcnow().isoformat()
+            
+            result = self.supabase.table("users")\
+                .update(update_data)\
+                .eq("id", user_id)\
+                .execute()
+            
+            if result.data:
+                logger.info("User updated successfully", user_id=user_id)
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            logger.error("Error updating user", user_id=user_id, error=str(e))
+            return None
+    
     async def create_conversation(self, user_id: str, title: str = "New Conversation") -> Optional[str]:
         """Create a new conversation for a user with fallback support."""
         # Try Supabase first if circuit breaker allows

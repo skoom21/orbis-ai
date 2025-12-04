@@ -7,6 +7,7 @@ import os
 
 from app.config import settings
 from app.routers import chat, health
+from app.api.v1 import router as api_v1_router
 # Import our enhanced logging system
 from app.logging_config import get_logger, log_request_response
 
@@ -51,6 +52,7 @@ if os.path.exists("static"):
 # Include routers
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(api_v1_router.router, prefix="/api")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

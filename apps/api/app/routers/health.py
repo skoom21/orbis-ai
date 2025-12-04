@@ -93,3 +93,68 @@ async def readiness_check():
             "status": "not_ready", 
             "checks": {"error": str(e)[:100]}
         }
+
+@router.get("/database")
+async def database_health():
+    """Detailed database health check"""
+    from app.services.database import db_service
+    from app.db.connection import engine, async_session_maker
+    import time
+    
+    health = {
+        "status": "unknown",
+        "checks": {},
+        "metrics": {}
+    }
+    
+    try:
+        # Check Supabase connection
+        start = time.time()
+        supabase_check = db_service.health_check()
+        health["checks"]["supabase"] = supabase_check
+        health["metrics"]["supabase_response_time_ms"] = round((time.time() - start) * 1000, 2)
+        
+        # Check connection pool status
+        if engine:
+            pool = engine.pool
+            health["metrics"]["pool_size"] = pool.size()
+            health["metrics"]["pool_checked_in"] = pool.checkedin()
+            health["metrics"]["pool_checked_out"] = pool.checkedout()
+            health["metrics"]["pool_overflow"] = pool.overflow()
+            health["checks"]["connection_pool"] = "configured"
+        else:
+            health["checks"]["connection_pool"] = "not_configured"
+        
+        # Test query performance
+        start = time.time()
+        try:
+            # Simple query to test database response
+            result = db_service.supabase.table("users").select("id").limit(1).execute()
+            query_time = round((time.time() - start) * 1000, 2)
+            health["metrics"]["query_response_time_ms"] = query_time
+            health["checks"]["query_test"] = "ok" if query_time < 100 else "slow"
+        except Exception as e:
+            health["checks"]["query_test"] = f"error: {str(e)[:50]}"
+        
+        # Check circuit breaker status
+        if hasattr(db_service, 'circuit_breaker'):
+            cb = db_service.circuit_breaker
+            health["metrics"]["circuit_breaker_state"] = cb.state
+            health["metrics"]["circuit_breaker_failures"] = cb.failures
+            health["checks"]["circuit_breaker"] = cb.state
+        
+        # Overall status
+        if all(
+            check in ["ok", "slow", "configured", "closed"] 
+            or (isinstance(check, dict) and check.get("supabase_available"))
+            for check in health["checks"].values()
+        ):
+            health["status"] = "healthy"
+        else:
+            health["status"] = "degraded"
+        
+    except Exception as e:
+        health["status"] = "unhealthy"
+        health["error"] = str(e)[:200]
+    
+    return health

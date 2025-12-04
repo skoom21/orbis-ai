@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Istok_Web, Open_Sans } from "next/font/google"
 import "./globals.css"
+import { AuthProvider } from "@/hooks/use-auth"
 
 const istokWeb = Istok_Web({
   subsets: ["latin"],
@@ -38,7 +39,9 @@ html {
 }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

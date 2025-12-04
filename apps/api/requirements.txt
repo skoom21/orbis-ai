@@ -26,6 +26,7 @@ faiss-cpu==1.7.4
 # Data validation and serialization
 pydantic==2.5.0
 pydantic-settings==2.1.0
+email-validator==2.3.0
 
 # HTTP clients and external APIs
 httpx==0.25.2
@@ -54,3 +55,5 @@ black==23.11.0
 isort==5.12.0
 flake8==6.1.0
 mypy==1.7.1
+pre-commit==3.5.0
+bandit==1.7.5

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = Field(default="", description="Supabase project URL")
     SUPABASE_ANON_KEY: str = Field(default="", description="Supabase anon key")
     SUPABASE_SERVICE_KEY: str = Field(default="", description="Supabase service role key")
+    SUPABASE_JWT_SECRET: str = Field(default="", description="Supabase JWT secret for token verification")
     
     # Database Configuration
     DATABASE_URL: str = Field(default="sqlite:///./orbis_ai.db", description="PostgreSQL database URL")
