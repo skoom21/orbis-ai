@@ -1,14 +1,19 @@
 /**
  * API Client for Orbis AI Backend
- * Handles all HTTP requests with authentication
+ * 
+ * Handles all HTTP requests with authentication.
+ * Rebuilt from scratch with comprehensive error handling.
  */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+// ============== Types ==============
+
 export interface ApiError {
   error: string
-  message: string
+  code: string
   detail?: string
+  status?: number
 }
 
 export interface LoginRequest {
@@ -35,15 +40,16 @@ export interface UserResponse {
   full_name: string
   role: string
   is_active: boolean
-  created_at: string
-  updated_at?: string
   email_verified: boolean
+  created_at?: string
 }
 
 export interface MessageResponse {
   message: string
-  detail?: string
+  code?: string
 }
+
+// ============== API Client Class ==============
 
 class ApiClient {
   private baseUrl: string
@@ -52,56 +58,42 @@ class ApiClient {
     this.baseUrl = baseUrl
   }
 
-  /**
-   * Get authorization header with JWT token
-   */
+  // ---------- Token Management ----------
+
+  getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('orbis_access_token')
+  }
+
+  getRefreshToken(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('orbis_refresh_token')
+  }
+
+  setTokens(accessToken: string, refreshToken: string): void {
+    if (typeof window === 'undefined') return
+    localStorage.setItem('orbis_access_token', accessToken)
+    localStorage.setItem('orbis_refresh_token', refreshToken)
+    console.log('[API] Tokens stored')
+  }
+
+  clearTokens(): void {
+    if (typeof window === 'undefined') return
+    localStorage.removeItem('orbis_access_token')
+    localStorage.removeItem('orbis_refresh_token')
+    console.log('[API] Tokens cleared')
+  }
+
   private getAuthHeader(): HeadersInit {
     const token = this.getAccessToken()
     if (token) {
-      return {
-        Authorization: `Bearer ${token}`,
-      }
+      return { Authorization: `Bearer ${token}` }
     }
     return {}
   }
 
-  /**
-   * Get access token from localStorage
-   */
-  getAccessToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('access_token')
-  }
+  // ---------- Core Request Methods ----------
 
-  /**
-   * Get refresh token from localStorage
-   */
-  getRefreshToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('refresh_token')
-  }
-
-  /**
-   * Store tokens in localStorage
-   */
-  setTokens(accessToken: string, refreshToken: string): void {
-    if (typeof window === 'undefined') return
-    localStorage.setItem('access_token', accessToken)
-    localStorage.setItem('refresh_token', refreshToken)
-  }
-
-  /**
-   * Clear tokens from localStorage
-   */
-  clearTokens(): void {
-    if (typeof window === 'undefined') return
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-  }
-
-  /**
-   * Make HTTP request with error handling
-   */
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -113,52 +105,69 @@ class ApiClient {
       ...options.headers,
     }
 
+    console.log(`[API] ${options.method || 'GET'} ${endpoint}`)
+
     try {
       const response = await fetch(url, {
         ...options,
         headers,
       })
 
-      // Handle non-JSON responses
+      // Parse response
       const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return {} as T
+      let data: any = null
+      
+      if (contentType?.includes('application/json')) {
+        data = await response.json()
       }
 
-      const data = await response.json()
-
+      // Handle errors
       if (!response.ok) {
-        throw data as ApiError
+        const error: ApiError = {
+          error: data?.error || data?.detail?.error || 'Request failed',
+          code: data?.code || data?.detail?.code || 'UNKNOWN_ERROR',
+          detail: typeof data?.detail === 'string' ? data.detail : undefined,
+          status: response.status,
+        }
+        
+        console.error(`[API] Error ${response.status}:`, error)
+        throw error
       }
 
       return data as T
+      
     } catch (error) {
-      // Log more detailed error information
-      if (error instanceof Error) {
-        console.error('API request failed:', {
-          message: error.message,
-          name: error.name,
-          stack: error.stack,
-          url,
-          method: options.method,
-        })
-      } else {
-        console.error('API request failed with unknown error:', error)
+      // Re-throw ApiError as-is
+      if ((error as ApiError).status !== undefined) {
+        throw error
       }
-      throw error
+      
+      // Handle network errors
+      console.error('[API] Network error:', error)
+      throw {
+        error: 'Network error',
+        code: 'NETWORK_ERROR',
+        detail: error instanceof Error ? error.message : 'Unknown error',
+        status: 0,
+      } as ApiError
     }
   }
 
-  /**
-   * Make authenticated request with automatic token refresh
-   */
   private async authenticatedRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    const token = this.getAccessToken()
+    
+    if (!token) {
+      console.log('[API] No access token available')
+      throw {
+        error: 'Not authenticated',
+        code: 'NOT_AUTHENTICATED',
+        status: 401,
+      } as ApiError
+    }
+
     try {
       return await this.request<T>(endpoint, {
         ...options,
@@ -167,12 +176,17 @@ class ApiClient {
           ...this.getAuthHeader(),
         },
       })
-    } catch (error: any) {
-      // If unauthorized, try to refresh token
-      if (error.error === 'Unauthorized' || error.message?.includes('401')) {
+    } catch (error) {
+      const apiError = error as ApiError
+      
+      // If 401, try to refresh token
+      if (apiError.status === 401) {
+        console.log('[API] Token expired, attempting refresh...')
+        
         const refreshed = await this.refreshToken()
+        
         if (refreshed) {
-          // Retry with new token
+          console.log('[API] Token refreshed, retrying request...')
           return await this.request<T>(endpoint, {
             ...options,
             headers: {
@@ -180,28 +194,33 @@ class ApiClient {
               ...this.getAuthHeader(),
             },
           })
+        } else {
+          console.log('[API] Token refresh failed, clearing tokens')
+          this.clearTokens()
         }
       }
+      
       throw error
     }
   }
 
-  // ==================== Authentication APIs ====================
+  // ---------- Auth Endpoints ----------
 
-  /**
-   * Register new user with email/password
-   */
   async register(data: RegisterRequest): Promise<UserResponse> {
-    return this.request<UserResponse>('/api/v1/auth/register', {
+    console.log('[API] Registering user:', data.email)
+    
+    const response = await this.request<UserResponse>('/api/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    
+    console.log('[API] Registration successful')
+    return response
   }
 
-  /**
-   * Login with email/password
-   */
   async login(data: LoginRequest): Promise<TokenResponse> {
+    console.log('[API] Logging in:', data.email)
+    
     const response = await this.request<TokenResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -210,33 +229,30 @@ class ApiClient {
     // Store tokens
     this.setTokens(response.access_token, response.refresh_token)
     
+    console.log('[API] Login successful')
     return response
   }
 
-  /**
-   * Logout current user
-   */
   async logout(): Promise<MessageResponse> {
+    console.log('[API] Logging out')
+    
     try {
       const response = await this.authenticatedRequest<MessageResponse>(
         '/api/v1/auth/logout',
-        {
-          method: 'POST',
-        }
+        { method: 'POST' }
       )
       return response
     } finally {
-      // Always clear tokens even if logout fails
+      // Always clear tokens
       this.clearTokens()
     }
   }
 
-  /**
-   * Refresh access token
-   */
   async refreshToken(): Promise<boolean> {
     const refreshToken = this.getRefreshToken()
+    
     if (!refreshToken) {
+      console.log('[API] No refresh token available')
       return false
     }
 
@@ -247,66 +263,49 @@ class ApiClient {
       })
 
       this.setTokens(response.access_token, response.refresh_token)
+      console.log('[API] Token refresh successful')
       return true
+      
     } catch (error) {
+      console.error('[API] Token refresh failed:', error)
       this.clearTokens()
       return false
     }
   }
 
-  /**
-   * Get current user profile
-   */
   async getCurrentUser(): Promise<UserResponse> {
+    console.log('[API] Getting current user')
     return this.authenticatedRequest<UserResponse>('/api/v1/auth/me', {
       method: 'GET',
     })
   }
 
-  /**
-   * Update current user profile
-   */
-  async updateProfile(data: Partial<RegisterRequest>): Promise<UserResponse> {
-    return this.authenticatedRequest<UserResponse>('/api/v1/auth/me', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-  }
-
-  /**
-   * Request password reset
-   */
   async requestPasswordReset(email: string): Promise<MessageResponse> {
     return this.request<MessageResponse>('/api/v1/auth/password-reset', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(email),
     })
   }
 
-  /**
-   * Verify email
-   */
-  async verifyEmail(token: string): Promise<MessageResponse> {
-    return this.request<MessageResponse>('/api/v1/auth/verify-email', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    })
-  }
+  // ---------- Health Check ----------
 
-  // ==================== Health Check ====================
-
-  /**
-   * Check API health
-   */
   async healthCheck(): Promise<{ status: string }> {
-    return this.request('/health', {
-      method: 'GET',
-    })
+    return this.request('/health/', { method: 'GET' })
   }
 }
 
 // Export singleton instance
 export const apiClient = new ApiClient()
+
+// Type guard for ApiError
+export function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'error' in error &&
+    'code' in error
+  )
+}
 
 // Export class for testing
 export default ApiClient

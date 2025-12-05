@@ -1,404 +1,326 @@
 """
 Core authentication module for Orbis AI.
 
-Handles JWT token creation/validation, password hashing, and Supabase Auth integration.
+Handles JWT token creation/validation and Supabase Auth integration.
+Rebuilt from scratch with proper error handling.
 """
 
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from supabase import Client, create_client
 from app.config import settings
 from app.logging_config import get_logger
 
 logger = get_logger("auth")
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+class AuthError(Exception):
+    """Custom authentication error with detailed info."""
+    def __init__(self, message: str, code: str = "AUTH_ERROR", details: Optional[Dict] = None):
+        self.message = message
+        self.code = code
+        self.details = details or {}
+        super().__init__(self.message)
 
 
 class AuthService:
-    """Handles authentication operations."""
+    """Handles JWT token operations."""
     
     def __init__(self):
         self.secret_key = settings.JWT_SECRET_KEY
         self.algorithm = settings.JWT_ALGORITHM
         self.access_token_expire_minutes = settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        logger.info("AuthService initialized")
     
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """Verify a password against its hash."""
-        return pwd_context.verify(plain_password, hashed_password)
-    
-    def get_password_hash(self, password: str) -> str:
-        """Hash a password."""
-        return pwd_context.hash(password)
-    
-    def create_access_token(
-        self, 
-        data: Dict[str, Any], 
-        expires_delta: Optional[timedelta] = None
-    ) -> str:
-        """
-        Create a JWT access token.
+    def create_access_token(self, user_id: str, email: str) -> str:
+        """Create a JWT access token."""
+        expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
         
-        Args:
-            data: Payload to encode in the token
-            expires_delta: Optional custom expiration time
-            
-        Returns:
-            Encoded JWT token string
-        """
-        to_encode = data.copy()
-        
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
-        
-        to_encode.update({
+        payload = {
+            "sub": user_id,
+            "email": email,
             "exp": expire,
             "iat": datetime.utcnow(),
             "type": "access"
-        })
+        }
         
-        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
-        logger.info("Created access token", user_id=data.get("sub"), expires_at=expire.isoformat())
-        
-        return encoded_jwt
+        token = jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        logger.info("Created access token", user_id=user_id)
+        return token
     
-    def create_refresh_token(self, data: Dict[str, Any]) -> str:
-        """
-        Create a JWT refresh token with longer expiration.
+    def create_refresh_token(self, user_id: str) -> str:
+        """Create a JWT refresh token (7 days)."""
+        expire = datetime.utcnow() + timedelta(days=7)
         
-        Args:
-            data: Payload to encode in the token
-            
-        Returns:
-            Encoded JWT refresh token string
-        """
-        to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=7)  # Refresh tokens last 7 days
-        
-        to_encode.update({
+        payload = {
+            "sub": user_id,
             "exp": expire,
             "iat": datetime.utcnow(),
             "type": "refresh"
-        })
+        }
         
-        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
-        logger.info("Created refresh token", user_id=data.get("sub"))
-        
-        return encoded_jwt
-    
-    def decode_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """
-        Decode and validate a JWT token.
-        
-        Args:
-            token: JWT token string
-            
-        Returns:
-            Decoded token payload or None if invalid
-        """
-        try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
-            return payload
-        except JWTError as e:
-            logger.warning("Token decode failed", error=str(e))
-            return None
+        token = jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        logger.info("Created refresh token", user_id=user_id)
+        return token
     
     def verify_token(self, token: str) -> Optional[str]:
         """
-        Verify a JWT token and extract user ID.
-        Supports both backend-issued tokens and Supabase tokens.
-        
-        Args:
-            token: JWT token string
-            
-        Returns:
-            User ID (sub claim) or None if invalid
+        Verify a JWT token and return the user_id.
+        Supports both our tokens and Supabase tokens.
         """
-        # First try to decode as our own token
-        payload = self.decode_token(token)
+        # Try our own token first
+        user_id = self._verify_our_token(token)
+        if user_id:
+            return user_id
         
-        # If our verification fails, try Supabase token verification
-        if payload is None:
-            payload = self._decode_supabase_token(token)
-        
-        if payload is None:
-            return None
-        
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            logger.warning("Token missing sub claim")
-            return None
-        
+        # Try Supabase token
+        user_id = self._verify_supabase_token(token)
         return user_id
     
-    def _decode_supabase_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """
-        Decode a Supabase JWT token.
-        
-        Args:
-            token: JWT token string from Supabase
-            
-        Returns:
-            Decoded token payload or None if invalid
-        """
+    def _verify_our_token(self, token: str) -> Optional[str]:
+        """Verify a token we issued."""
         try:
-            # Supabase tokens can be verified without signature if we just need to read them
-            # For production, you should verify with Supabase JWT secret from project settings
-            # Get the JWT secret from Supabase Dashboard -> Settings -> API -> JWT Secret
-            supabase_jwt_secret = settings.SUPABASE_JWT_SECRET if hasattr(settings, 'SUPABASE_JWT_SECRET') else None
-            
-            if supabase_jwt_secret:
-                # Verify with Supabase JWT secret
-                payload = jwt.decode(token, supabase_jwt_secret, algorithms=["HS256"], audience="authenticated")
-                logger.info("Supabase token verified", user_id=payload.get("sub"))
-                return payload
-            else:
-                # Fallback: decode without verification (not recommended for production)
-                # This allows the token to be read but doesn't verify its authenticity
-                payload = jwt.decode(token, options={"verify_signature": False})
-                logger.warning("Supabase token decoded without verification - add SUPABASE_JWT_SECRET for production")
-                return payload
-                
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            user_id = payload.get("sub")
+            if user_id:
+                logger.debug("Verified our token", user_id=user_id)
+                return user_id
+            return None
         except JWTError as e:
-            logger.warning("Supabase token decode failed", error=str(e))
+            logger.debug("Our token verification failed", error=str(e))
             return None
     
-    def validate_token_type(self, token: str, expected_type: str = "access") -> bool:
-        """
-        Validate that a token is of the expected type.
-        
-        Args:
-            token: JWT token string
-            expected_type: Expected token type ('access' or 'refresh')
+    def _verify_supabase_token(self, token: str) -> Optional[str]:
+        """Verify a Supabase JWT token."""
+        try:
+            # Try with Supabase JWT secret if available
+            jwt_secret = getattr(settings, 'SUPABASE_JWT_SECRET', None)
             
-        Returns:
-            True if token type matches, False otherwise
-        """
-        payload = self.decode_token(token)
-        if payload is None:
-            return False
-        
-        token_type = payload.get("type")
-        return token_type == expected_type
+            if jwt_secret:
+                payload = jwt.decode(token, jwt_secret, algorithms=["HS256"], audience="authenticated")
+            else:
+                # Decode without verification (development only)
+                payload = jwt.decode(token, options={"verify_signature": False})
+                logger.warning("Supabase token decoded without verification - set SUPABASE_JWT_SECRET for production")
+            
+            user_id = payload.get("sub")
+            if user_id:
+                logger.debug("Verified Supabase token", user_id=user_id)
+                return user_id
+            return None
+        except JWTError as e:
+            logger.debug("Supabase token verification failed", error=str(e))
+            return None
 
 
 class SupabaseAuthService:
-    """Handles Supabase Auth operations."""
+    """Handles Supabase Auth operations with proper error handling."""
     
     def __init__(self, supabase_client: Client):
         self.supabase = supabase_client
+        logger.info("SupabaseAuthService initialized")
     
-    async def sign_up(self, email: str, password: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
+    async def sign_up(self, email: str, password: str, full_name: str) -> Dict[str, Any]:
         """
-        Register a new user with Supabase Auth.
+        Register a new user.
         
-        Args:
-            email: User email
-            password: User password
-            metadata: Optional user metadata
-            
         Returns:
-            Supabase auth response with user and session
+            Dict with 'user' and 'session' keys
+            
+        Raises:
+            AuthError: If registration fails
         """
         try:
+            logger.info("Attempting sign up", email=email)
+            
             response = self.supabase.auth.sign_up({
                 "email": email,
                 "password": password,
                 "options": {
-                    "data": metadata or {}
+                    "data": {"full_name": full_name}
                 }
             })
             
-            logger.info("User signed up", email=email)
-            return response
+            if not response.user:
+                raise AuthError(
+                    message="Sign up failed - no user returned",
+                    code="SIGNUP_FAILED"
+                )
             
-        except Exception as e:
-            logger.error("Sign up failed", email=email, error=str(e))
+            logger.info("Sign up successful", user_id=response.user.id, email=email)
+            
+            return {
+                "user": response.user,
+                "session": response.session  # May be None if email confirmation required
+            }
+            
+        except AuthError:
             raise
+        except Exception as e:
+            error_msg = str(e)
+            logger.error("Sign up failed", email=email, error=error_msg)
+            
+            # Parse common Supabase errors
+            if "already registered" in error_msg.lower():
+                raise AuthError(
+                    message="A user with this email already exists",
+                    code="USER_EXISTS"
+                )
+            elif "invalid" in error_msg.lower() and "email" in error_msg.lower():
+                raise AuthError(
+                    message="Invalid email address",
+                    code="INVALID_EMAIL"
+                )
+            elif "password" in error_msg.lower():
+                raise AuthError(
+                    message="Password does not meet requirements",
+                    code="WEAK_PASSWORD"
+                )
+            else:
+                raise AuthError(
+                    message=f"Registration failed: {error_msg}",
+                    code="SIGNUP_ERROR"
+                )
     
     async def sign_in(self, email: str, password: str) -> Dict[str, Any]:
         """
-        Sign in a user with Supabase Auth.
+        Sign in a user.
         
-        Args:
-            email: User email
-            password: User password
-            
         Returns:
-            Supabase auth response with user and session
+            Dict with 'user' and 'session' keys
+            
+        Raises:
+            AuthError: If login fails
         """
         try:
+            logger.info("Attempting sign in", email=email)
+            
             response = self.supabase.auth.sign_in_with_password({
                 "email": email,
                 "password": password
             })
             
-            logger.info("User signed in", email=email)
-            return response
+            if not response.user or not response.session:
+                raise AuthError(
+                    message="Sign in failed - invalid response",
+                    code="SIGNIN_FAILED"
+                )
             
-        except Exception as e:
-            logger.error("Sign in failed", email=email, error=str(e))
+            logger.info("Sign in successful", user_id=response.user.id, email=email)
+            
+            return {
+                "user": response.user,
+                "session": response.session
+            }
+            
+        except AuthError:
             raise
+        except Exception as e:
+            error_msg = str(e)
+            logger.warning("Sign in failed", email=email, error=error_msg)
+            
+            # Parse common errors
+            if "invalid login credentials" in error_msg.lower():
+                raise AuthError(
+                    message="Invalid email or password",
+                    code="INVALID_CREDENTIALS"
+                )
+            elif "email not confirmed" in error_msg.lower():
+                raise AuthError(
+                    message="Please verify your email before signing in",
+                    code="EMAIL_NOT_CONFIRMED"
+                )
+            else:
+                raise AuthError(
+                    message=f"Sign in failed: {error_msg}",
+                    code="SIGNIN_ERROR"
+                )
     
-    async def sign_out(self, access_token: str) -> None:
-        """
-        Sign out a user.
-        
-        Args:
-            access_token: User's access token
-        """
+    async def sign_out(self) -> None:
+        """Sign out the current user."""
         try:
             self.supabase.auth.sign_out()
             logger.info("User signed out")
         except Exception as e:
             logger.error("Sign out failed", error=str(e))
-            raise
+            # Don't raise - sign out should be best-effort
     
-    async def get_user(self, access_token: str) -> Dict[str, Any]:
-        """
-        Get user information from Supabase Auth.
-        
-        Args:
-            access_token: User's access token
-            
-        Returns:
-            User information from Supabase Auth
-        """
+    async def get_user(self, access_token: str) -> Optional[Any]:
+        """Get user info from Supabase using access token."""
         try:
             response = self.supabase.auth.get_user(access_token)
-            logger.info("Retrieved user from Supabase Auth")
-            return response
+            if response and response.user:
+                logger.debug("Got user from Supabase", user_id=response.user.id)
+                return response.user
+            return None
         except Exception as e:
-            logger.error("Failed to get user from Supabase Auth", error=str(e))
-            return {"error": str(e)}
-    
-    async def reset_password_email(self, email: str) -> Dict[str, Any]:
-        """
-        Send password reset email.
-        
-        Args:
-            email: User email
-            
-        Returns:
-            Supabase response
-        """
-        try:
-            response = self.supabase.auth.reset_password_for_email(email)
-            logger.info("Password reset email sent", email=email)
-            return response
-        except Exception as e:
-            logger.error("Password reset email failed", email=email, error=str(e))
-            raise
-    
-    async def update_password(self, access_token: str, new_password: str) -> Dict[str, Any]:
-        """
-        Update user password.
-        
-        Args:
-            access_token: User's access token
-            new_password: New password
-            
-        Returns:
-            Supabase response
-        """
-        try:
-            # Set the session first
-            self.supabase.auth.set_session(access_token, None)
-            
-            response = self.supabase.auth.update_user({
-                "password": new_password
-            })
-            
-            logger.info("Password updated")
-            return response
-        except Exception as e:
-            logger.error("Password update failed", error=str(e))
-            raise
-    
-    async def verify_email(self, token: str, type: str = "signup") -> Dict[str, Any]:
-        """
-        Verify user email with token.
-        
-        Args:
-            token: Verification token
-            type: Verification type ('signup' or 'recovery')
-            
-        Returns:
-            Supabase response
-        """
-        try:
-            response = self.supabase.auth.verify_otp({
-                "token": token,
-                "type": type
-            })
-            logger.info("Email verified", type=type)
-            return response
-        except Exception as e:
-            logger.error("Email verification failed", error=str(e))
-            raise
-    
-    async def get_user(self, access_token: str) -> Optional[Dict[str, Any]]:
-        """
-        Get user data from access token.
-        
-        Args:
-            access_token: User's access token
-            
-        Returns:
-            User data or None if invalid
-        """
-        try:
-            # Set session
-            self.supabase.auth.set_session(access_token, None)
-            
-            response = self.supabase.auth.get_user()
-            return response.user if response else None
-        except Exception as e:
-            logger.error("Get user failed", error=str(e))
+            logger.error("Failed to get user from Supabase", error=str(e))
             return None
     
     async def refresh_session(self, refresh_token: str) -> Dict[str, Any]:
-        """
-        Refresh user session.
-        
-        Args:
-            refresh_token: Refresh token
-            
-        Returns:
-            New session with access token
-        """
+        """Refresh the user session."""
         try:
             response = self.supabase.auth.refresh_session(refresh_token)
+            
+            if not response.session:
+                raise AuthError(
+                    message="Session refresh failed",
+                    code="REFRESH_FAILED"
+                )
+            
             logger.info("Session refreshed")
-            return response
+            return {
+                "user": response.user,
+                "session": response.session
+            }
+            
+        except AuthError:
+            raise
         except Exception as e:
             logger.error("Session refresh failed", error=str(e))
-            raise
+            raise AuthError(
+                message="Invalid or expired refresh token",
+                code="INVALID_REFRESH_TOKEN"
+            )
+    
+    async def reset_password_email(self, email: str) -> None:
+        """Send password reset email."""
+        try:
+            self.supabase.auth.reset_password_for_email(email)
+            logger.info("Password reset email sent", email=email)
+        except Exception as e:
+            logger.error("Password reset email failed", email=email, error=str(e))
+            raise AuthError(
+                message="Failed to send password reset email",
+                code="RESET_EMAIL_FAILED"
+            )
 
 
-# Initialize Supabase client for authentication
-def _get_supabase_client() -> Optional[Client]:
-    """Get or create Supabase client for auth operations."""
+# --- Global Instances ---
+
+def _create_supabase_client() -> Optional[Client]:
+    """Create Supabase client for auth operations."""
     try:
-        if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
-            return create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
-        logger.warning("Supabase credentials not configured for auth")
-        return None
+        url = settings.SUPABASE_URL
+        key = settings.SUPABASE_ANON_KEY
+        
+        if not url or not key:
+            logger.warning("Supabase credentials not configured")
+            return None
+        
+        client = create_client(url, key)
+        logger.info("Supabase client created for auth")
+        return client
+        
     except Exception as e:
-        logger.error("Failed to initialize Supabase client for auth", error=str(e))
+        logger.error("Failed to create Supabase client", error=str(e))
         return None
 
 
-# Global auth service instances
+# Initialize global instances
 auth_service = AuthService()
-
-# Initialize Supabase auth service only if client is available
-_supabase_client = _get_supabase_client()
+_supabase_client = _create_supabase_client()
 supabase_auth_service = SupabaseAuthService(_supabase_client) if _supabase_client else None
 
 

@@ -31,16 +31,15 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      await login(email, password)
+    const result = await login({ email, password })
+    
+    if (result.success) {
       router.push('/dashboard')
-    } catch (err: unknown) {
-      console.error('Login error:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Invalid email or password'
-      setError(errorMessage)
-    } finally {
-      setIsLoading(false)
+    } else {
+      setError(result.error?.message || 'Invalid email or password')
     }
+    
+    setIsLoading(false)
   }
 
   const handleGoogleSignIn = async () => {
@@ -64,7 +63,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#101117] flex items-center justify-center p-4">
       <Link
         href="/"
         className="absolute top-6 left-6 z-20 text-zinc-400 hover:text-[#e78a53] transition-colors duration-200 flex items-center space-x-2"
@@ -76,7 +75,7 @@ export default function LoginPage() {
       </Link>
 
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900" />
+      <div className="absolute inset-0 h-max bg-gradient-to-br from-[#101117] via-black to-[#101117]" />
 
       {/* Decorative elements */}
       <div className="absolute top-20 left-20 w-72 h-72 bg-[#e78a53]/10 rounded-full blur-3xl" />

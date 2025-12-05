@@ -73,8 +73,25 @@ class DatabaseService:
         except Exception as e:
             logger.error("Failed to initialize Supabase client", error=str(e))
     
-    async def create_user(self, email: str, full_name: str, preferences: Dict[str, Any] = None) -> Optional[str]:
-        """Create a new user in the system."""
+    async def create_user(
+        self, 
+        email: str, 
+        full_name: str, 
+        user_id: Optional[str] = None,
+        metadata: Dict[str, Any] = None
+    ) -> Optional[str]:
+        """
+        Create a new user in public.users.
+        
+        Args:
+            email: User email
+            full_name: User's full name
+            user_id: Optional UUID - if provided, uses this as the ID (for syncing with auth.users)
+            metadata: Optional metadata dict
+            
+        Returns:
+            User ID if created, None otherwise
+        """
         try:
             if not self.supabase:
                 logger.error("Supabase client not available")
@@ -83,23 +100,31 @@ class DatabaseService:
             user_data = {
                 "email": email,
                 "full_name": full_name,
-                "preferences": preferences or {},
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat()
+                "metadata": metadata or {},
             }
+            
+            # If user_id provided, include it (for syncing from auth.users)
+            if user_id:
+                user_data["id"] = user_id
             
             result = self.supabase.table("users").insert(user_data).execute()
             
             if result.data:
-                user_id = result.data[0]["id"]
-                logger.info("User created successfully", user_id=user_id, email=email)
-                return user_id
+                created_id = result.data[0]["id"]
+                logger.info("User created successfully", user_id=created_id, email=email)
+                return created_id
             else:
-                logger.error("Failed to create user", email=email)
+                logger.error("Failed to create user - no data returned", email=email)
                 return None
                 
         except Exception as e:
-            logger.error("Error creating user", email=email, error=str(e))
+            error_str = str(e)
+            # Check if it's a duplicate key error (user already exists)
+            if "duplicate key" in error_str.lower() or "23505" in error_str:
+                logger.info("User already exists", email=email)
+                return user_id  # Return the ID since user exists
+            
+            logger.error("Error creating user", email=email, error=error_str)
             return None
     
     async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
