@@ -134,6 +134,17 @@ class GeminiService:
             agent_type: Type of agent (orchestrator, flight, hotel, itinerary)
             model: Model to use (gemini-2.5-flash, gemini-2.5-flash-lite, gemini-3-pro)
         """
+        import time
+        start_time = time.time()
+        
+        logger.info(
+            "Starting Gemini response generation",
+            agent_type=agent_type,
+            model=model,
+            message_length=len(user_message),
+            history_length=len(conversation_history) if conversation_history else 0
+        )
+        
         try:
             if not self.client:
                 logger.error("Gemini client not available")
@@ -155,25 +166,64 @@ class GeminiService:
             )
             
             if response and response.text:
+                duration = time.time() - start_time
+                response_text = response.text.strip()
+                
                 logger.info(
-                    "Generated response", 
+                    "Generated response successfully", 
                     agent_type=agent_type, 
                     model=model,
-                    user_message_length=len(user_message)
+                    user_message_length=len(user_message),
+                    response_length=len(response_text),
+                    duration_ms=round(duration * 1000, 2)
                 )
-                return response.text.strip()
+                
+                # Log AI interaction
+                log_ai_interaction(
+                    agent_type=agent_type,
+                    user_message=user_message,
+                    ai_response=response_text,
+                    duration=duration,
+                    metadata={"model": model}
+                )
+                
+                return response_text
             else:
-                logger.warning("Empty response from Gemini", agent_type=agent_type)
+                duration = time.time() - start_time
+                logger.warning(
+                    "Empty response from Gemini", 
+                    agent_type=agent_type,
+                    model=model,
+                    duration_ms=round(duration * 1000, 2)
+                )
                 return "I apologize, but I couldn't generate a proper response. Could you please rephrase your question?"
                 
         except Exception as e:
-            logger.error("Error generating response", agent_type=agent_type, error=str(e))
+            duration = time.time() - start_time
+            logger.error(
+                "Error generating response", 
+                agent_type=agent_type, 
+                model=model,
+                error=str(e),
+                error_type=type(e).__name__,
+                duration_ms=round(duration * 1000, 2)
+            )
             return "I encountered an error while processing your request. Please try again."
     
     async def analyze_intent(self, user_message: str) -> Dict[str, Any]:
         """Analyze user intent for routing to appropriate agents."""
+        import time
+        start_time = time.time()
+        
+        logger.info(
+            "Starting intent analysis",
+            message_length=len(user_message),
+            message_preview=user_message[:100]
+        )
+        
         try:
             if not self.client:
+                logger.warning("Gemini client not available for intent analysis")
                 return {"intent": "general", "entities": {}, "confidence": 0.0}
             
             intent_prompt = f"""
@@ -217,19 +267,43 @@ class GeminiService:
                 import json
                 try:
                     result = json.loads(response.text)
-                    return {
+                    duration = time.time() - start_time
+                    
+                    intent_result = {
                         "intent": result.get("intent", "general"),
                         "entities": result.get("entities", {}),
                         "confidence": result.get("confidence", 0.5)
                     }
-                except json.JSONDecodeError:
-                    logger.warning("Failed to parse intent JSON response")
+                    
+                    logger.info(
+                        "Intent analysis complete",
+                        intent=intent_result["intent"],
+                        confidence=intent_result["confidence"],
+                        entities_count=len(intent_result["entities"]),
+                        duration_ms=round(duration * 1000, 2)
+                    )
+                    
+                    return intent_result
+                except json.JSONDecodeError as e:
+                    duration = time.time() - start_time
+                    logger.warning(
+                        "Failed to parse intent JSON response",
+                        error=str(e),
+                        response_text=response.text[:200],
+                        duration_ms=round(duration * 1000, 2)
+                    )
                     return {"intent": "general", "entities": {}, "confidence": 0.0}
             
             return {"intent": "general", "entities": {}, "confidence": 0.0}
             
         except Exception as e:
-            logger.error("Error analyzing intent", error=str(e))
+            duration = time.time() - start_time
+            logger.error(
+                "Error analyzing intent", 
+                error=str(e),
+                error_type=type(e).__name__,
+                duration_ms=round(duration * 1000, 2)
+            )
             return {"intent": "general", "entities": {}, "confidence": 0.0}
     
     async def generate_conversation_title(

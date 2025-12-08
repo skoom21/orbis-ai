@@ -97,6 +97,7 @@ class MemoryFallbackService:
             )
             
             self._conversations[conversation_id] = conversation
+            return conversation_id
             
     def create_conversation_with_id(self, conversation_id: str, user_id: str, title: str = "New Conversation") -> str:
         """Create a conversation with a specific ID in memory."""

@@ -4,6 +4,7 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+sse-starlette>=1.8.2
 
 # Database and Supabase
 supabase==2.0.0
@@ -16,6 +17,10 @@ google-genai==0.1.0
 langchain==0.0.352
 langchain-google-genai==0.0.6
 langchain-community==0.0.13
+langchain-core==1.1.1
+langgraph==1.0.4
+langgraph-checkpoint==3.0.1
+langgraph-sdk==0.2.14
 
 # Vector embeddings and RAG
 numpy==1.24.3

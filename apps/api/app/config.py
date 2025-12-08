@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     
     # Google Gemini Configuration
     GOOGLE_API_KEY: str = Field(default="", description="Google AI API key")
-    GEMINI_MODEL: str = Field(default="gemini-pro", description="Gemini model name")
+    GEMINI_MODEL: str = Field(default="gemini-2.0-flash-exp", description="Gemini model name")
     GEMINI_EMBEDDING_MODEL: str = Field(
         default="models/embedding-001", 
         description="Gemini embedding model"

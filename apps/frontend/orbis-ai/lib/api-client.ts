@@ -287,6 +287,46 @@ class ApiClient {
     })
   }
 
+  // ---------- Chat & Conversations ----------
+
+  async createConversation(title?: string): Promise<{ id: string; title: string; created_at: string; user_id: string }> {
+    console.log('[API] Creating new conversation')
+    return this.authenticatedRequest('/api/v1/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ title: title || 'New Conversation' }),
+    })
+  }
+
+  async getConversation(conversationId: string): Promise<{ id: string; title: string; created_at: string; user_id: string }> {
+    return this.authenticatedRequest(`/api/v1/conversations/${conversationId}`, {
+      method: 'GET',
+    })
+  }
+
+  async getConversations(): Promise<Array<{ id: string; title: string; created_at: string; user_id: string }>> {
+    return this.authenticatedRequest('/api/v1/conversations', {
+      method: 'GET',
+    })
+  }
+
+  async getMessages(conversationId: string): Promise<Array<{
+    id: string;
+    conversation_id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    created_at: string;
+  }>> {
+    return this.authenticatedRequest(`/api/v1/conversations/${conversationId}/messages`, {
+      method: 'GET',
+    })
+  }
+
+  async deleteConversation(conversationId: string): Promise<MessageResponse> {
+    return this.authenticatedRequest(`/api/v1/conversations/${conversationId}`, {
+      method: 'DELETE',
+    })
+  }
+
   // ---------- Health Check ----------
 
   async healthCheck(): Promise<{ status: string }> {

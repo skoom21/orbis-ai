@@ -5,28 +5,28 @@
 
 /* Switched to dark mode as default - Dark Navy background with Paper White text */
 :root {
-  --background:#101117;/* Darker Navy for main background */
-  --foreground: #e8e8e6; /* Paper White */
-  --card: #242f45; /* Slightly lighter card background */
-  --card-foreground: #e8e8e6;
+  --background: #181816; /* Updated from colors-example.md */
+  --foreground: #e5f0e8; /* Updated from colors-example.md */
+  --card: #242f45; /* Keeping existing card for now, or should I derive from background? */
+  --card-foreground: #e5f0e8;
   --popover: #242f45;
-  --popover-foreground: #e8e8e6;
-  --primary: #6b7dc4; /* Lighter Primary Blue for dark mode */
-  --primary-foreground: #1a2235;
-  --secondary: #2e3a55; /* Dark Navy */
-  --secondary-foreground: #e8e8e6;
+  --popover-foreground: #e5f0e8;
+  --primary: #6271b7; /* Updated from colors-example.md */
+  --primary-foreground: #ffffff;
+  --secondary: #a9b5d1; /* Updated from colors-example.md */
+  --secondary-foreground: #181816; /* Dark text for light secondary */
   --muted: #3d4d6a;
   --muted-foreground: #a0a8b8;
-  --accent: #db5844; /* Art Brut Red */
-  --accent-foreground: #e8e8e6;
-  --destructive: #db5844;
-  --destructive-foreground: #e8e8e6;
+  --accent: #bc3824; /* Updated from colors-example.md */
+  --accent-foreground: #ffffff;
+  --destructive: #bc3824;
+  --destructive-foreground: #ffffff;
   --border: #3d4d6a;
   --input: #3d4d6a;
-  --ring: #6b7dc4;
-  --chart-1: #6b7dc4;
-  --chart-2: #db5844;
-  --chart-3: #7a8fc4;
+  --ring: #6271b7;
+  --chart-1: #6271b7;
+  --chart-2: #bc3824;
+  --chart-3: #a9b5d1;
   --chart-4: #8896b3;
   --chart-5: #a5b1c5;
   --sidebar: #1a2235;

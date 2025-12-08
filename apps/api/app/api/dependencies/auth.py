@@ -6,17 +6,19 @@ Rebuilt from scratch with proper error handling.
 """
 
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.auth import auth_service, supabase_auth_service
 from app.services.database import db_service
+from app.config import settings
 from app.logging_config import get_logger
 
 logger = get_logger("api.auth.dependencies")
 
 # HTTP Bearer token security scheme
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_id(
@@ -49,6 +51,61 @@ async def get_current_user_id(
     
     logger.debug("Token verified", user_id=user_id)
     return user_id
+
+
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional)
+) -> dict:
+    """
+    Get current user with optional authentication for demo mode.
+    In development, allows unauthenticated access with a demo user.
+    
+    Args:
+        credentials: Optional HTTP Bearer token
+        
+    Returns:
+        User data dictionary (demo or authenticated)
+    """
+    demo_user = {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "email": "demo@orbis.ai",
+        "full_name": "Demo User",
+        "email_verified": True,
+        "status": "active"
+    }
+    
+    # If credentials provided, verify them
+    if credentials:
+        try:
+            user_id = auth_service.verify_token(credentials.credentials)
+            if user_id:
+                user = await db_service.get_user_by_id(user_id)
+                if user:
+                    logger.debug("Authenticated user", user_id=user_id)
+                    return user
+                logger.warning("User not found in database", user_id=user_id)
+        except Exception as e:
+            logger.error("Token verification failed", error=str(e))
+        
+        # In production, fail if auth credentials were provided but invalid
+        if settings.ENVIRONMENT == "production":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error": "Invalid or expired token", "code": "INVALID_TOKEN"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    
+    # In development without credentials or with invalid credentials, use demo user
+    if settings.ENVIRONMENT == "development":
+        logger.debug("Using demo user for request")
+        return demo_user
+    
+    # In production without credentials, require authentication
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={"error": "Authentication required", "code": "AUTH_REQUIRED"},
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def get_current_user(
@@ -163,31 +220,3 @@ async def get_current_active_user(
     
     return current_user
 
-
-async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
-        HTTPBearer(auto_error=False)
-    )
-) -> Optional[dict]:
-    """
-    Optionally get current user if authenticated.
-    
-    Use this for endpoints that work both authenticated and unauthenticated.
-    
-    Returns:
-        User data dictionary if authenticated, None otherwise
-    """
-    if not credentials:
-        return None
-    
-    try:
-        user_id = auth_service.verify_token(credentials.credentials)
-        if not user_id:
-            return None
-        
-        user = await db_service.get_user_by_id(user_id)
-        return user
-        
-    except Exception as e:
-        logger.debug("Optional auth failed", error=str(e))
-        return None

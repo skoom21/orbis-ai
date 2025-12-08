@@ -1,6 +1,6 @@
-"""Enhanced orchestrator agent with real AI capabilities."""
+"""Enhanced orchestrator agent with multi-agent routing and streaming support."""
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, AsyncGenerator
 import uuid
 import time
 from app.services.gemini import gemini_service
@@ -13,14 +13,26 @@ logger = get_logger("orchestrator")
 
 class OrchestratorAgent:
     """
-    Enhanced orchestrator that integrates with Gemini AI, database, and caching.
-    Handles real travel planning conversations with intelligent responses.
+    Multi-agent orchestrator with LangGraph-style routing.
+    Analyzes user intent and routes to specialized agents (flight, hotel, planner, itinerary).
+    Supports streaming responses for real-time UX.
     """
     
     def __init__(self):
         self.agent_type = "orchestrator"
-        self.name = "Enhanced Orchestrator"
-        self.version = "2.0"
+        self.name = "Multi-Agent Orchestrator"
+        self.version = "3.0"
+        
+        # Agent routing map based on intent
+        self.agent_map = {
+            "flight_search": "flight",
+            "hotel_search": "hotel",
+            "itinerary_planning": "itinerary",
+            "general_travel": "planner",
+            "booking": "booking",
+            "budget_planning": "planner",
+            "general": "orchestrator"
+        }
         
     async def process_message(self, message_data: Any) -> Dict[str, Any]:
         """Process message (compatibility method for chat router)"""
@@ -191,3 +203,104 @@ class OrchestratorAgent:
                 "error": str(e),
                 "services": {}
             }
+    
+    async def stream_response(
+        self,
+        message: str,
+        conversation_history: List[Dict[str, str]],
+        agent_type: str = "orchestrator",
+        model: str = "gemini-2.0-flash-exp"
+    ) -> AsyncGenerator[str, None]:
+        """
+        Stream response tokens using the appropriate specialized agent.
+        This integrates with the multi-agent architecture.
+        """
+        try:
+            # Route to specialized agent based on intent
+            routed_agent = self.agent_map.get(agent_type, "orchestrator")
+            
+            logger.info(
+                "Streaming with agent routing",
+                intent=agent_type,
+                routed_agent=routed_agent,
+                message_length=len(message)
+            )
+            
+            # Stream response using Gemini with agent-specific system prompt
+            from app.llm.gemini_client import GeminiClient
+            
+            client = GeminiClient()
+            
+            # Build agent-specific system instruction
+            system_instructions = self._get_agent_system_prompt(routed_agent)
+            
+            # Add system context to history
+            enhanced_history = conversation_history.copy()
+            if system_instructions:
+                # Prepend system context as first message
+                enhanced_history.insert(0, {
+                    "role": "assistant",
+                    "content": system_instructions
+                })
+            
+            # Stream from Gemini with agent context
+            async for chunk in client.stream_response(
+                message=message,
+                conversation_history=enhanced_history,
+                model=model
+            ):
+                yield chunk
+                
+        except Exception as e:
+            logger.error("Error in orchestrator streaming", error=str(e), agent_type=agent_type)
+            yield f"I encountered an error while processing your request. Please try again."
+    
+    def _get_agent_system_prompt(self, agent_type: str) -> str:
+        """Get system prompt for specialized agent."""
+        prompts = {
+            "flight": """You are a Flight Specialist Agent for Orbis AI. Your expertise:
+- Search and compare flight options
+- Analyze routes and connections
+- Optimize for cost, time, or convenience
+- Provide airline recommendations
+- Consider travel dates and flexibility
+Always provide specific, actionable flight recommendations.""",
+            
+            "hotel": """You are a Hotel Specialist Agent for Orbis AI. Your expertise:
+- Recommend accommodations based on location, budget, amenities
+- Analyze hotel ratings and reviews
+- Consider proximity to attractions
+- Compare pricing across properties
+- Suggest booking strategies
+Provide detailed hotel recommendations with reasoning.""",
+            
+            "itinerary": """You are an Itinerary Planning Agent for Orbis AI. Your expertise:
+- Create day-by-day activity schedules
+- Optimize routes and timing
+- Recommend attractions and experiences
+- Balance activities with rest
+- Provide local tips and insights
+Build comprehensive, realistic itineraries.""",
+            
+            "planner": """You are a Travel Planning Agent for Orbis AI. Your expertise:
+- Understand travel goals and preferences
+- Suggest destinations
+- Plan trip structure and duration
+- Budget estimation and optimization
+- Coordinate multiple travel components
+Help users plan complete, well-rounded trips.""",
+            
+            "booking": """You are a Booking Agent for Orbis AI. Your expertise:
+- Guide through booking processes
+- Explain cancellation policies
+- Compare booking platforms
+- Verify reservation details
+- Handle booking-related questions
+Assist with all booking-related needs.""",
+            
+            "orchestrator": """You are Orbis AI, an intelligent travel planning assistant.
+You coordinate with specialized agents to provide comprehensive travel solutions.
+Help users with all aspects of trip planning: flights, hotels, activities, and more."""
+        }
+        
+        return prompts.get(agent_type, prompts["orchestrator"])

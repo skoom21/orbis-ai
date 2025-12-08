@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth, type AuthUser } from "@/hooks/use-auth"
+import { apiClient } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface DashboardHeaderProps {
   user: AuthUser | null
@@ -21,12 +23,26 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
   const [hasNotifications] = useState(true)
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false)
   const { logout } = useAuth()
   const router = useRouter()
 
   const handleLogout = async () => {
     await logout()
     router.push('/login')
+  }
+
+  const handleNewTrip = async () => {
+    setIsCreatingTrip(true)
+    try {
+      const conversation = await apiClient.createConversation('New Trip Planning')
+      router.push(`/chat/${conversation.id}`)
+    } catch (error) {
+      console.error('[Header] Failed to create trip:', error)
+      toast.error('Failed to create new trip')
+    } finally {
+      setIsCreatingTrip(false)
+    }
   }
 
   // Get display name and email from user
@@ -61,9 +77,16 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         {/* Right Side Actions */}
         <div className="flex items-center gap-3">
           {/* New Trip Button */}
-          <button className="flex items-center gap-2 px-5 py-3 bg-accent text-accent-foreground rounded-xl font-semibold shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:-translate-y-0.5 transition-all duration-200 group">
-            <Plus className="w-5 h-5 transition-transform group-hover:rotate-90 duration-300" />
-            <span>New Trip</span>
+          <button 
+            onClick={handleNewTrip}
+            disabled={isCreatingTrip}
+            className="relative flex items-center gap-2 px-5 py-3 bg-accent text-accent-foreground rounded-xl font-semibold shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:-translate-y-0.5 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          >
+            <Plus className={cn(
+              "w-5 h-5 transition-transform duration-300",
+              isCreatingTrip ? "animate-spin" : "group-hover:rotate-90"
+            )} />
+            <span>{isCreatingTrip ? 'Creating...' : 'New Trip'}</span>
             {/* Glowing effect */}
             <div className="absolute inset-0 rounded-xl bg-accent/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
           </button>

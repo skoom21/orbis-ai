@@ -144,7 +144,7 @@ CREATE TABLE user_preferences (
     
     -- Free-form preference text (for RAG embedding)
     preference_text TEXT, -- Natural language description
-    preference_embedding VECTOR(1536), -- OpenAI embedding
+    preference_embedding VECTOR(768), -- OpenAI embedding
     
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -569,7 +569,7 @@ CREATE TABLE travel_guides (
     tags TEXT[] DEFAULT '{}',
     
     -- Embedding for RAG
-    content_embedding VECTOR(1536),
+    content_embedding VECTOR(768),
     
     -- Metadata
     language TEXT DEFAULT 'en',
@@ -620,7 +620,7 @@ CREATE TABLE user_travel_history (
     favorite_places JSONB DEFAULT '[]',
     
     -- Embedding for similarity matching
-    experience_embedding VECTOR(1536),
+    experience_embedding VECTOR(768),
     
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -931,7 +931,7 @@ CREATE TABLE trip_reviews (
     photo_urls TEXT[] DEFAULT '{}',
     
     -- Embedding for sentiment analysis
-    review_embedding VECTOR(1536),
+    review_embedding VECTOR(768),
     sentiment_score DECIMAL(3, 2), -- -1 to 1 (negative to positive)
     
     -- Public/Private
@@ -1171,7 +1171,7 @@ CREATE TABLE attractions (
     google_place_id TEXT,
     
     -- Embedding for recommendations
-    description_embedding VECTOR(1536),
+    description_embedding VECTOR(768),
     
     -- Metadata
     metadata JSONB DEFAULT '{}',
@@ -1369,7 +1369,7 @@ GROUP BY DATE_TRUNC('day', created_at);
 -- Match User Preferences (RAG similarity search)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION match_user_preferences(
-    query_embedding VECTOR(1536),
+    query_embedding VECTOR(768),
     target_user_id UUID,
     match_threshold FLOAT DEFAULT 0.7,
     match_count INT DEFAULT 5
@@ -1397,7 +1397,7 @@ $$;
 -- Match Travel Guides (RAG similarity search)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION match_travel_guides(
-    query_embedding VECTOR(1536),
+    query_embedding VECTOR(768),
     match_threshold FLOAT DEFAULT 0.7,
     match_count INT DEFAULT 10,
     destination_filter TEXT DEFAULT NULL

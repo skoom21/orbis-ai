@@ -56,16 +56,15 @@ async function sendMessage() {
     addTypingIndicator();
     
     try {
-        const response = await fetch('/api/v1/chat/message', {
+        // Use the new streaming endpoint
+        const response = await fetch('/api/v1/chat/stream', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                conversation_id: conversationId,
-                user_id: 'demo-user',
                 message: message,
-                context: {}
+                conversation_id: conversationId
             })
         });
         
@@ -73,13 +72,42 @@ async function sendMessage() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const data = await response.json();
-        
         // Remove typing indicator
         removeTypingIndicator();
         
-        // Add assistant response
-        addMessage(data.response || "I'm thinking about your request...");
+        // Handle SSE stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = '';
+        let messageDiv = null;
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.content) {
+                            fullResponse += data.content;
+                            if (!messageDiv) {
+                                messageDiv = document.createElement('div');
+                                messageDiv.className = 'message assistant-message';
+                                messagesContainer.appendChild(messageDiv);
+                            }
+                            messageDiv.textContent = fullResponse;
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }
+                    } catch (e) {
+                        // Ignore parse errors for incomplete chunks
+                    }
+                }
+            }
+        }
         
     } catch (error) {
         console.error('Error sending message:', error);
@@ -163,11 +191,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadConversationHistory() {
     try {
-        const response = await fetch(`/api/v1/chat/conversations/${conversationId}`);
+        const response = await fetch(`/api/v1/conversations/${conversationId}/messages`);
         if (response.ok) {
-            const data = await response.json();
-            if (data.messages && data.messages.length > 0) {
-                data.messages.forEach(msg => {
+            const messages = await response.json();
+            if (messages && messages.length > 0) {
+                messages.forEach(msg => {
                     addMessage(msg.content, msg.role === 'user');
                 });
                 return;

@@ -184,13 +184,17 @@ class DatabaseService:
     
     async def create_conversation(self, user_id: str, title: str = "New Conversation") -> Optional[str]:
         """Create a new conversation for a user with fallback support."""
+        import time
+        start_time = time.time()
+        
+        logger.info("Creating conversation", user_id=user_id, title=title[:50])
+        
         # Try Supabase first if circuit breaker allows
         if self.circuit_breaker.should_attempt() and self.supabase:
             try:
                 conversation_data = {
                     "user_id": user_id,
                     "title": title,
-                    "status": "active",
                     "created_at": datetime.utcnow().isoformat(),
                     "updated_at": datetime.utcnow().isoformat()
                 }
@@ -199,25 +203,90 @@ class DatabaseService:
                 
                 if result.data:
                     conversation_id = result.data[0]["id"]
+                    duration = time.time() - start_time
                     self.circuit_breaker.record_success()
-                    logger.info("Conversation created in Supabase", conversation_id=conversation_id, user_id=user_id)
+                    
+                    logger.info(
+                        "Conversation created in Supabase",
+                        conversation_id=conversation_id,
+                        user_id=user_id,
+                        source="supabase"
+                    )
+                    
+                    log_database_operation(
+                        operation="INSERT",
+                        table="conversations",
+                        duration=duration,
+                        success=True
+                    )
+                    
                     return conversation_id
                     
             except Exception as e:
-                logger.error("Error creating conversation in Supabase", user_id=user_id, error=str(e))
+                duration = time.time() - start_time
+                logger.error(
+                    "Error creating conversation in Supabase",
+                    user_id=user_id,
+                    error=str(e),
+                    error_type=type(e).__name__
+                )
+                log_database_operation(
+                    operation="INSERT",
+                    table="conversations",
+                    duration=duration,
+                    success=False,
+                    error=str(e)
+                )
                 self.circuit_breaker.record_failure()
         
         # Fallback to memory service
         try:
             conversation_id = memory_service.create_conversation(user_id, title)
-            logger.info("Conversation created in memory fallback", conversation_id=conversation_id, user_id=user_id)
+            duration = time.time() - start_time
+            
+            logger.info(
+                "Conversation created in memory fallback",
+                conversation_id=conversation_id,
+                user_id=user_id,
+                source="memory"
+            )
+            
+            log_database_operation(
+                operation="INSERT",
+                table="conversations",
+                duration=duration,
+                success=True
+            )
+            
             return conversation_id
         except Exception as e:
-            logger.error("Error creating conversation in memory fallback", user_id=user_id, error=str(e))
+            duration = time.time() - start_time
+            logger.error(
+                "Error creating conversation in memory fallback",
+                user_id=user_id,
+                error=str(e)
+            )
+            log_database_operation(
+                operation="INSERT",
+                table="conversations",
+                duration=duration,
+                success=False,
+                error=str(e)
+            )
             return None
     
-    async def add_message(self, conversation_id: str, content: str, role: str, metadata: Dict[str, Any] = None) -> Optional[str]:
+    async def add_message(self, conversation_id: str, content: str, role: str, metadata: Dict[str, Any] = None, parent_message_id: Optional[str] = None) -> Optional[str]:
         """Add a message to a conversation with fallback support."""
+        import time
+        start_time = time.time()
+        
+        logger.info(
+            "Adding message",
+            conversation_id=conversation_id,
+            role=role,
+            content_length=len(content)
+        )
+        
         # Try Supabase first if circuit breaker allows
         if self.circuit_breaker.should_attempt() and self.supabase:
             try:
@@ -232,26 +301,92 @@ class DatabaseService:
                     "created_at": datetime.utcnow().isoformat()
                 }
                 
+                if parent_message_id:
+                    message_data["parent_message_id"] = parent_message_id
+                
                 result = self.supabase.table("messages").insert(message_data).execute()
                 
                 if result.data:
                     message_id = result.data[0]["id"]
+                    duration = time.time() - start_time
                     self.circuit_breaker.record_success()
-                    logger.info("Message added to Supabase", message_id=message_id, conversation_id=conversation_id, role=role)
+                    
+                    logger.info(
+                        "Message added to Supabase",
+                        message_id=message_id,
+                        conversation_id=conversation_id,
+                        role=role,
+                        source="supabase"
+                    )
+                    
+                    log_database_operation(
+                        operation="INSERT",
+                        table="messages",
+                        duration=duration,
+                        success=True
+                    )
+                    
                     return message_id
                     
             except Exception as e:
-                logger.error("Error adding message to Supabase", conversation_id=conversation_id, error=str(e))
+                duration = time.time() - start_time
+                logger.error(
+                    "Error adding message to Supabase",
+                    conversation_id=conversation_id,
+                    error=str(e),
+                    error_type=type(e).__name__
+                )
+                log_database_operation(
+                    operation="INSERT",
+                    table="messages",
+                    duration=duration,
+                    success=False,
+                    error=str(e)
+                )
                 self.circuit_breaker.record_failure()
         
         # Fallback to memory service
         try:
+            # Memory service doesn't support parent_message_id yet, but that's fine for fallback
             message_id = memory_service.add_message(conversation_id, content, role, metadata)
             logger.info("Message added to memory fallback", message_id=message_id, conversation_id=conversation_id, role=role)
             return message_id
         except Exception as e:
             logger.error("Error adding message to memory fallback", conversation_id=conversation_id, error=str(e))
             return None
+
+    async def get_conversation(self, conversation_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific conversation."""
+        if self.circuit_breaker.should_attempt() and self.supabase:
+            try:
+                result = self.supabase.table("conversations")\
+                    .select("*")\
+                    .eq("id", conversation_id)\
+                    .eq("user_id", user_id)\
+                    .execute()
+                if result.data:
+                    return result.data[0]
+            except Exception as e:
+                logger.error("Error getting conversation", conversation_id=conversation_id, error=str(e))
+                self.circuit_breaker.record_failure()
+        return None
+
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> bool:
+        """Delete a conversation."""
+        if self.circuit_breaker.should_attempt() and self.supabase:
+            try:
+                result = self.supabase.table("conversations")\
+                    .delete()\
+                    .eq("id", conversation_id)\
+                    .eq("user_id", user_id)\
+                    .execute()
+                if result.data:
+                    logger.info("Conversation deleted", conversation_id=conversation_id)
+                    return True
+            except Exception as e:
+                logger.error("Error deleting conversation", conversation_id=conversation_id, error=str(e))
+                self.circuit_breaker.record_failure()
+        return False
     
     async def get_conversation_messages(self, conversation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Get messages for a conversation with fallback support."""
@@ -378,7 +513,10 @@ class DatabaseService:
         return health
     
     def _ensure_conversation_exists(self, conversation_id: str, user_id: Optional[str] = None):
-        """Ensure conversation exists in database before adding messages."""
+        """Ensure conversation exists in database before adding messages (synchronous helper)."""
+        if not self.supabase:
+            return
+            
         try:
             # Check if conversation exists
             response = self.supabase.table("conversations").select("id").eq("id", conversation_id).execute()

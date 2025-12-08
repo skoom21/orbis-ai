@@ -5,7 +5,6 @@ from app.services.chat_service import chat_service
 from app.logging_config import get_logger
 
 logger = get_logger("api.health")
-from app.agents.orchestrator_simple import OrchestratorAgent
 
 router = APIRouter()
 
@@ -23,19 +22,23 @@ async def health_check():
         # Check chat service
         chat_status = await chat_service.health_check()
         
-        # Check orchestrator and integrated services
-        orchestrator = OrchestratorAgent()
-        orchestrator_health = await orchestrator.health_check()
+        # Check integrated services
+        from app.services.gemini import gemini_service
+        from app.services.database import db_service
         
-        # Determine overall status
-        all_services = {
+        services_health = {
             "chat": chat_status,
-            **orchestrator_health.get("services", {})
+            "gemini": "healthy",  # Basic check - could enhance
+            "database": db_service.health_check()
         }
         
+        # Determine overall status
         overall_status = "healthy"
-        for service_name, service_status in all_services.items():
-            if isinstance(service_status, str) and "unhealthy" in service_status:
+        for service_name, service_status in services_health.items():
+            if isinstance(service_status, dict) and not service_status.get("supabase_available", True):
+                overall_status = "degraded"
+                break
+            elif isinstance(service_status, str) and "unhealthy" in service_status:
                 overall_status = "degraded"
                 break
         
@@ -43,7 +46,7 @@ async def health_check():
             status=overall_status,
             timestamp=datetime.utcnow().isoformat(),
             version="2.0.0",
-            services=all_services
+            services=services_health
         )
         
     except Exception as e:

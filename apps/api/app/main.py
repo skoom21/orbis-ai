@@ -6,7 +6,7 @@ import time
 import os
 
 from app.config import settings
-from app.routers import chat, health
+from app.routers import health, conversations, chat_stream
 from app.api.v1 import router as api_v1_router
 # Import our enhanced logging system
 from app.logging_config import get_logger, log_request_response
@@ -51,8 +51,9 @@ if os.path.exists("static"):
 
 # Include routers
 app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
-app.include_router(api_v1_router.router, prefix="/api")
+app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat"])
+app.include_router(conversations.router, prefix="/api/v1", tags=["conversations"])
+app.include_router(api_v1_router.router, prefix="/api", tags=["auth"])
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -62,7 +63,7 @@ async def root():
     <html>
     <head>
         <title>Orbis AI Test Chat</title>
-        <link rel="stylesheet" href="/static/style.css">
+        <link rel="stylesheet" href="/static/style.css?v=2.0">
     </head>
     <body>
         <div class="chat-container">
@@ -83,7 +84,7 @@ async def root():
                 <button id="send-button" onclick="sendMessage()">Send</button>
             </div>
         </div>
-        <script src="/static/script.js"></script>
+        <script src="/static/script.js?v=2.0"></script>
     </body>
     </html>
     """

@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Istok_Web, Open_Sans } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/hooks/use-auth"
+import { Providers } from "./providers"
+import { Toaster } from "sonner"
 
 const istokWeb = Istok_Web({
   subsets: ["latin"],
@@ -40,7 +42,12 @@ html {
         `}</style>
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>
+          <AuthProvider>
+            {children}
+            <Toaster position="top-center" richColors />
+          </AuthProvider>
+        </Providers>
       </body>
     </html>
   )
