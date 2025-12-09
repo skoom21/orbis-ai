@@ -7,11 +7,22 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials not found. OAuth authentication will not work.')
+// Create a singleton client that's safe for build time
+let supabaseInstance: ReturnType<typeof createClient> | null = null
+
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('Supabase credentials not found. OAuth authentication will not work.')
+      // Return a mock client for build time to prevent crashes
+      return createClient('https://placeholder.supabase.co', 'placeholder-key')
+    }
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
+  }
+  return supabaseInstance
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = getSupabaseClient()
 
 /**
  * Sign in with Google OAuth
