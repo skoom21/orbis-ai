@@ -185,6 +185,12 @@ function MessageComponent({
                 </Button>
               </div>
             </div>
+          ) : isStreaming && !content.trim() ? (
+            <div className="flex items-center gap-1.5 py-1" aria-label="Assistant is thinking">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:120ms]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:240ms]" />
+            </div>
           ) : (
             <MemoizedMessageContentParts content={content} />
           )}
