@@ -1,14 +1,37 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { apiClient } from '@/lib/api-client'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function ChatIndexPage() {
+  const { session } = useAuth()
+  const router = useRouter()
+  const [isCreating, setIsCreating] = useState(false)
+
+  useEffect(() => {
+    if (!session?.access_token || isCreating) return
+    const createConversation = async () => {
+      setIsCreating(true)
+      try {
+        const convo = await apiClient.createConversation('New Trip Chat')
+        router.push(`/chat/${convo.id}`)
+      } finally {
+        setIsCreating(false)
+      }
+    }
+
+    createConversation()
+  }, [session?.access_token, isCreating, router])
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-50 gap-4">
-      <h1 className="text-2xl font-bold text-gray-800">Select a Conversation</h1>
-      <p className="text-gray-500">Choose a chat from the dashboard to start messaging.</p>
-      <Link href="/dashboard">
-        <Button>Go to Dashboard</Button>
-      </Link>
+    <div className="flex h-full min-h-[60vh] items-center justify-center">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Preparing your chat...
+      </div>
     </div>
-  );
+  )
 }

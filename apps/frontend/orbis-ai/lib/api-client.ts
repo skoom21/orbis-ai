@@ -49,6 +49,41 @@ export interface MessageResponse {
   code?: string
 }
 
+export interface ChatConversation {
+  id: string
+  title: string
+  created_at: string
+  updated_at?: string
+  user_id: string
+}
+
+export interface ChatMessage {
+  id: string
+  conversation_id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  created_at: string
+  parent_message_id?: string | null
+  metadata?: Record<string, unknown>
+}
+
+export interface ConversationListOptions {
+  limit?: number
+  search?: string
+}
+
+export interface ChatStreamRequest {
+  message: string
+  conversation_id?: string
+  parent_message_id?: string
+  model?: string
+}
+
+export interface ConversationExportData {
+  conversation: ChatConversation
+  messages: ChatMessage[]
+}
+
 // ============== API Client Class ==============
 
 class ApiClient {
@@ -100,8 +135,9 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
     
+    const isFormDataBody = typeof FormData !== 'undefined' && options.body instanceof FormData
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(isFormDataBody ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     }
 
@@ -289,7 +325,7 @@ class ApiClient {
 
   // ---------- Chat & Conversations ----------
 
-  async createConversation(title?: string): Promise<{ id: string; title: string; created_at: string; user_id: string }> {
+  async createConversation(title?: string): Promise<ChatConversation> {
     console.log('[API] Creating new conversation')
     return this.authenticatedRequest('/api/v1/conversations', {
       method: 'POST',
@@ -297,27 +333,45 @@ class ApiClient {
     })
   }
 
-  async getConversation(conversationId: string): Promise<{ id: string; title: string; created_at: string; user_id: string }> {
+  async getConversation(conversationId: string): Promise<ChatConversation> {
     return this.authenticatedRequest(`/api/v1/conversations/${conversationId}`, {
       method: 'GET',
     })
   }
 
-  async getConversations(): Promise<Array<{ id: string; title: string; created_at: string; user_id: string }>> {
-    return this.authenticatedRequest('/api/v1/conversations', {
+  async getConversations(options?: ConversationListOptions): Promise<ChatConversation[]> {
+    const params = new URLSearchParams()
+    if (options?.limit) {
+      params.set('limit', String(options.limit))
+    }
+
+    const endpoint = `/api/v1/conversations${params.toString() ? `?${params.toString()}` : ''}`
+    const conversations = await this.authenticatedRequest<ChatConversation[]>(endpoint, {
+      method: 'GET',
+    })
+
+    if (!options?.search?.trim()) {
+      return conversations
+    }
+
+    const searchTerm = options.search.trim().toLowerCase()
+    return conversations.filter((conversation) => conversation.title.toLowerCase().includes(searchTerm))
+  }
+
+  async searchConversations(query: string, limit = 100): Promise<ChatConversation[]> {
+    return this.getConversations({ search: query, limit })
+  }
+
+  async getMessages(conversationId: string, limit = 100): Promise<ChatMessage[]> {
+    return this.authenticatedRequest(`/api/v1/conversations/${conversationId}/messages?limit=${limit}`, {
       method: 'GET',
     })
   }
 
-  async getMessages(conversationId: string): Promise<Array<{
-    id: string;
-    conversation_id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    created_at: string;
-  }>> {
-    return this.authenticatedRequest(`/api/v1/conversations/${conversationId}/messages`, {
-      method: 'GET',
+  async updateConversationTitle(conversationId: string, title: string): Promise<ChatConversation> {
+    return this.authenticatedRequest(`/api/v1/conversations/${conversationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ title }),
     })
   }
 
@@ -325,6 +379,92 @@ class ApiClient {
     return this.authenticatedRequest(`/api/v1/conversations/${conversationId}`, {
       method: 'DELETE',
     })
+  }
+
+  async createChatStream(request: ChatStreamRequest, signal?: AbortSignal): Promise<Response> {
+    const endpoint = '/api/v1/chat/stream'
+    const makeRequest = async (token: string) => {
+      return fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(request),
+        signal,
+      })
+    }
+
+    const token = this.getAccessToken()
+    if (!token) {
+      throw {
+        error: 'Not authenticated',
+        code: 'NOT_AUTHENTICATED',
+        status: 401,
+      } as ApiError
+    }
+
+    let response = await makeRequest(token)
+    if (response.status === 401) {
+      const refreshed = await this.refreshToken()
+      if (refreshed) {
+        const nextToken = this.getAccessToken()
+        if (nextToken) {
+          response = await makeRequest(nextToken)
+        }
+      }
+    }
+
+    return response
+  }
+
+  async uploadChatAttachment(file: File, conversationId?: string): Promise<{ id: string; name: string; url?: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (conversationId) {
+      formData.append('conversation_id', conversationId)
+    }
+
+    return this.authenticatedRequest('/api/v1/chat/attachments', {
+      method: 'POST',
+      body: formData,
+    })
+  }
+
+  async getConversationExportData(conversationId: string): Promise<ConversationExportData> {
+    const [conversation, messages] = await Promise.all([
+      this.getConversation(conversationId),
+      this.getMessages(conversationId, 200),
+    ])
+
+    return { conversation, messages }
+  }
+
+  async exportConversationAsJson(conversationId: string): Promise<string> {
+    const payload = await this.getConversationExportData(conversationId)
+    return JSON.stringify(payload, null, 2)
+  }
+
+  async exportConversationAsMarkdown(conversationId: string): Promise<string> {
+    const payload = await this.getConversationExportData(conversationId)
+    const header = [`# ${payload.conversation.title}`, '', `Conversation ID: ${payload.conversation.id}`, '']
+    const messageBlocks = payload.messages.map((message) => {
+      const roleLabel = message.role.charAt(0).toUpperCase() + message.role.slice(1)
+      return [`## ${roleLabel}`, '', message.content, ''].join('\n')
+    })
+    return [...header, ...messageBlocks].join('\n')
+  }
+
+  getConversationShareLink(conversationId: string, origin?: string): string {
+    if (origin) {
+      return `${origin}/chat/${conversationId}`
+    }
+
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/chat/${conversationId}`
+    }
+
+    return `/chat/${conversationId}`
   }
 
   // ---------- Health Check ----------

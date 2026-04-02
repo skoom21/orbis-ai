@@ -6,6 +6,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './use-auth'
+import { apiClient } from '@/lib/api-client'
 
 interface Message {
   id: string
@@ -13,11 +14,21 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   created_at: string
+  parent_message_id?: string | null
 }
 
 interface StreamMessage {
-  content: string
-  conversation_id: string
+  type?: 'created' | 'type' | 'sync' | 'attachment' | 'final' | 'cancel' | 'error'
+  content?: string
+  message?: string
+  conversation_id?: string
+  message_id?: string
+  detail?: string
+}
+
+interface ParsedSSEEvent {
+  event: string
+  data: StreamMessage | null
 }
 
 interface UseChatStreamOptions {
@@ -32,6 +43,45 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingMessage, setStreamingMessage] = useState('')
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  const parseSSE = useCallback((rawText: string): ParsedSSEEvent[] => {
+    const blocks = rawText.split(/\n\n+/)
+    const parsed: ParsedSSEEvent[] = []
+
+    for (const block of blocks) {
+      if (!block.trim()) continue
+
+      let event = 'message'
+      const dataLines: string[] = []
+
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) {
+          event = line.slice(6).trim()
+          continue
+        }
+        if (line.startsWith('data:')) {
+          dataLines.push(line.slice(5).trim())
+        }
+      }
+
+      const dataText = dataLines.join('\n')
+      if (!dataText) {
+        parsed.push({ event, data: null })
+        continue
+      }
+
+      try {
+        parsed.push({ event, data: JSON.parse(dataText) as StreamMessage })
+      } catch {
+        parsed.push({
+          event,
+          data: { content: dataText, type: event as StreamMessage['type'] },
+        })
+      }
+    }
+
+    return parsed
+  }, [])
 
   const stopStreaming = useCallback(() => {
     if (abortControllerRef.current) {
@@ -61,6 +111,12 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
       abortControllerRef.current = new AbortController()
 
       try {
+        const existingMessages = queryClient.getQueryData<Message[]>(['messages', conversationId]) || []
+        const lastPersistedMessage = [...existingMessages]
+          .reverse()
+          .find((item) => !item.id.startsWith('temp-'))
+        const parentMessageId = lastPersistedMessage?.id
+
         // Optimistically add user message
         const tempUserId = `temp-user-${Date.now()}`
         queryClient.setQueryData<Message[]>(['messages', conversationId], (old = []) => [
@@ -71,22 +127,18 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
             role: 'user' as const,
             content: message,
             created_at: new Date().toISOString(),
+            parent_message_id: parentMessageId || null,
           },
         ])
 
-        // Start SSE stream
-        const response = await fetch('http://localhost:8000/api/v1/chat/stream', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
+        const response = await apiClient.createChatStream(
+          {
             message,
             conversation_id: conversationId,
-          }),
-          signal: abortControllerRef.current.signal,
-        })
+            parent_message_id: parentMessageId,
+          },
+          abortControllerRef.current?.signal
+        )
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${await response.text()}`)
@@ -102,6 +154,22 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
         let buffer = ''
         let accumulatedContent = ''
 
+        const appendDelta = async (delta: string) => {
+          if (!delta) return
+
+          const chunkSize = delta.length > 120 ? 10 : delta.length > 40 ? 6 : delta.length
+
+          for (let offset = 0; offset < delta.length; offset += chunkSize) {
+            const chunk = delta.slice(offset, offset + chunkSize)
+            accumulatedContent += chunk
+            setStreamingMessage(accumulatedContent)
+
+            if (offset + chunkSize < delta.length) {
+              await new Promise((resolve) => setTimeout(resolve, 12))
+            }
+          }
+        }
+
         while (true) {
           const { done, value } = await reader.read()
 
@@ -110,27 +178,40 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
           }
 
           buffer += decoder.decode(value, { stream: true })
-          
-          // Process complete SSE events
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || '' // Keep incomplete line in buffer
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.slice(6) // Remove 'data: ' prefix
-              
-              try {
-                const data: StreamMessage = JSON.parse(dataStr)
-                accumulatedContent += data.content
-                setStreamingMessage(accumulatedContent)
-              } catch (e) {
-                console.warn('[ChatStream] Failed to parse SSE data:', dataStr)
-              }
-            } else if (line === 'event: done') {
-              // Stream complete
-              console.log('[ChatStream] Stream complete')
-            } else if (line === 'event: error') {
-              console.error('[ChatStream] Stream error event')
+          const eventChunks = buffer.split('\n\n')
+          buffer = eventChunks.pop() || ''
+
+          for (const parsedEvent of parseSSE(eventChunks.join('\n\n'))) {
+            const normalizedType = parsedEvent.data?.type || parsedEvent.event
+
+            if (normalizedType === 'created' || normalizedType === 'sync') {
+              continue
+            }
+
+            if (normalizedType === 'token' || normalizedType === 'type' || normalizedType === 'attachment' || normalizedType === 'message') {
+              const delta = parsedEvent.data?.content || parsedEvent.data?.message || ''
+              if (!delta) continue
+              await appendDelta(delta)
+              continue
+            }
+
+            if (normalizedType === 'final' || normalizedType === 'done') {
+              break
+            }
+
+            if (normalizedType === 'cancel') {
+              stopStreaming()
+              break
+            }
+
+            if (normalizedType === 'error') {
+              throw new Error(
+                parsedEvent.data?.detail ||
+                  parsedEvent.data?.message ||
+                  (parsedEvent.data as { error?: string } | null)?.error ||
+                  'Stream error'
+              )
             }
           }
         }

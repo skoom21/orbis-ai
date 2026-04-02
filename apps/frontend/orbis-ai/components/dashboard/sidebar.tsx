@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Home,
   Map,
@@ -21,7 +22,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { icon: Home, label: "Home", href: "/dashboard", active: true },
+  { icon: Home, label: "Home", href: "/dashboard" },
   { icon: Map, label: "Itineraries", href: "/dashboard/itineraries" },
   { icon: MessageSquare, label: "Chats", href: "/dashboard/chats" },
   { icon: Clock, label: "Travel History", href: "/dashboard/history" },
@@ -31,6 +32,7 @@ const navItems = [
 
 export function DashboardSidebar({ collapsed, onToggle }: SidebarProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const pathname = usePathname()
 
   return (
     <aside
@@ -54,7 +56,10 @@ export function DashboardSidebar({ collapsed, onToggle }: SidebarProps) {
         {navItems.map((item) => {
           const Icon = item.icon
           const isHovered = hoveredItem === item.label
-          const isActive = item.active
+          // Check exact match for /dashboard, prefix match for other routes
+          const isActive = item.href === "/dashboard" 
+            ? pathname === "/dashboard" 
+            : pathname.startsWith(item.href)
 
           return (
             <Link

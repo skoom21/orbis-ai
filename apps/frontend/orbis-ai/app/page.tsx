@@ -109,7 +109,7 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 relative z-50">
           <a
             href="/login"
             className="font-medium transition-colors hover:text-foreground text-muted-foreground text-sm cursor-pointer"
@@ -188,7 +188,7 @@ export default function Home() {
               <div className="border-t border-border pt-4 mt-4 flex flex-col space-y-3">
                 <a
                   href="/login"
-                  className="px-4 py-3 text-lg font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 cursor-pointer"
+                  className="px-4 py-3 text-lg font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 cursor-pointer text-center block"
                 >
                   Log In
                 </a>
@@ -212,10 +212,10 @@ export default function Home() {
         <OrbisFeatures />
       </div>
 
-      {/* Pricing Section */}
+      {/* Pricing Section
       <div id="pricing">
         <OrbisPricing />
-      </div>
+      </div> */}
 
       {/* Testimonials Section */}
       <div id="testimonials">
