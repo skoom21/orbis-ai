@@ -3,7 +3,7 @@
  * Handles SSE streaming for chat messages with proper state management
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './use-auth'
 import { apiClient } from '@/lib/api-client'
@@ -41,8 +41,33 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
   const queryClient = useQueryClient()
   
   const [isStreaming, setIsStreaming] = useState(false)
+  const [rawStreamingMessage, setRawStreamingMessage] = useState('')
   const [streamingMessage, setStreamingMessage] = useState('')
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    if (!isStreaming) {
+      setStreamingMessage('')
+      setRawStreamingMessage('')
+      return
+    }
+    
+    if (streamingMessage === rawStreamingMessage) return
+
+    const interval = setInterval(() => {
+      setStreamingMessage((prev) => {
+        if (prev.length >= rawStreamingMessage.length) {
+          clearInterval(interval)
+          return prev
+        }
+        const diff = rawStreamingMessage.length - prev.length
+        const chunkSize = Math.max(1, Math.min(4, Math.ceil(diff / 5)))
+        return rawStreamingMessage.slice(0, prev.length + chunkSize)
+      })
+    }, 15)
+
+    return () => clearInterval(interval)
+  }, [rawStreamingMessage, isStreaming, streamingMessage])
 
   const parseSSE = useCallback((rawText: string): ParsedSSEEvent[] => {
     const blocks = rawText.split(/\n\n+/)
@@ -89,7 +114,7 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
       abortControllerRef.current = null
     }
     setIsStreaming(false)
-    setStreamingMessage('')
+    setRawStreamingMessage('')
   }, [])
 
   const sendMessage = useCallback(
@@ -105,7 +130,7 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
       }
 
       setIsStreaming(true)
-      setStreamingMessage('')
+      setRawStreamingMessage('')
 
       // Create abort controller
       abortControllerRef.current = new AbortController()
@@ -152,30 +177,11 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
-        let accumulatedContent = ''
-
-        const appendDelta = async (delta: string) => {
-          if (!delta) return
-
-          const chunkSize = delta.length > 120 ? 10 : delta.length > 40 ? 6 : delta.length
-
-          for (let offset = 0; offset < delta.length; offset += chunkSize) {
-            const chunk = delta.slice(offset, offset + chunkSize)
-            accumulatedContent += chunk
-            setStreamingMessage(accumulatedContent)
-
-            if (offset + chunkSize < delta.length) {
-              await new Promise((resolve) => setTimeout(resolve, 12))
-            }
-          }
-        }
 
         while (true) {
           const { done, value } = await reader.read()
 
-          if (done) {
-            break
-          }
+          if (done) break
 
           buffer += decoder.decode(value, { stream: true })
 
@@ -185,14 +191,22 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
           for (const parsedEvent of parseSSE(eventChunks.join('\n\n'))) {
             const normalizedType = parsedEvent.data?.type || parsedEvent.event
 
-            if (normalizedType === 'created' || normalizedType === 'sync') {
+            if (normalizedType === 'created' || normalizedType === 'sync' || normalizedType === 'agent') {
               continue
             }
 
             if (normalizedType === 'token' || normalizedType === 'type' || normalizedType === 'attachment' || normalizedType === 'message') {
               const delta = parsedEvent.data?.content || parsedEvent.data?.message || ''
               if (!delta) continue
-              await appendDelta(delta)
+              
+              setRawStreamingMessage((prev) => {
+                // If it's already accumulating this exactly, don't double append
+                if (prev && prev.endsWith(delta) && delta.length > 20) return prev;
+                // If the delta IS the full string so far (cumulative mode)
+                if (delta.startsWith(prev)) return delta;
+                // Otherwise append
+                return prev + delta;
+              })
               continue
             }
 
@@ -236,11 +250,11 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
         )
       } finally {
         setIsStreaming(false)
-        setStreamingMessage('')
+        setRawStreamingMessage('')
         abortControllerRef.current = null
       }
     },
-    [session, conversationId, isStreaming, queryClient, onError]
+    [session, conversationId, isStreaming, queryClient, onError, parseSSE, stopStreaming]
   )
 
   const regenerateLastMessage = useCallback(async () => {

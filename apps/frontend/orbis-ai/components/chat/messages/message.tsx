@@ -194,7 +194,7 @@ function MessageComponent({
           ) : (
             <MemoizedMessageContentParts content={content} />
           )}
-          {isStreaming && (
+          {isStreaming && content.trim() && (
             <span className="inline-block ml-1 animate-pulse">▊</span>
           )}
         </div>

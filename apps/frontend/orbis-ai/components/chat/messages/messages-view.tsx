@@ -97,12 +97,15 @@ export function MessagesView({
   }, [])
 
   useEffect(() => {
-    if (!bottomRef.current) return
+    if (!scrollRef.current) return
     if (!autoScrollEnabled && !isAtBottom) return
 
-    bottomRef.current.scrollIntoView({
-      behavior: streamingMessage ? 'smooth' : 'auto',
-    })
+    const el = scrollRef.current;
+    if (streamingMessage) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [visibleMessages.length, streamingMessage, autoScrollEnabled, isAtBottom])
 
   const handleScroll = () => {
@@ -162,11 +165,11 @@ export function MessagesView({
   }
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex h-full w-full flex-1 flex-col overflow-hidden">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-4 h-full"
+        className="flex-1 overflow-y-auto p-4 space-y-4"
         role="log"
         aria-label="Chat messages"
         aria-live="polite"
@@ -218,7 +221,9 @@ export function MessagesView({
           onClick={() => {
             setAutoScrollEnabled(true)
             setSetting('autoScroll', true)
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+            if (scrollRef.current) {
+              scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+            }
           }}
           className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-lg hover:bg-muted transition-colors"
           aria-label="Scroll to latest"
@@ -232,8 +237,8 @@ export function MessagesView({
           const next = !autoScrollEnabled
           setAutoScrollEnabled(next)
           setSetting('autoScroll', next)
-          if (next) {
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+          if (next && scrollRef.current) {
+            scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
           }
         }}
         className="absolute bottom-16 right-4 rounded-md border border-border bg-card px-2 py-1 text-[10px] text-muted-foreground hover:bg-muted"

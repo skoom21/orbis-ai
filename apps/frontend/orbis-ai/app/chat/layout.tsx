@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -30,9 +30,9 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   }, [mobileNavOpen])
 
   return (
-    <div className="h-screen bg-background">
-      <div className="mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-4 lg:py-6">
-        <div className="mb-3 flex items-center justify-between lg:hidden">
+    <div className="h-screen bg-background overflow-hidden relative">
+      <div className="mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-4 lg:py-6 overflow-hidden relative">
+        <div className="mb-3 flex items-center justify-between lg:hidden shrink-0">
           <button
             onClick={() => setMobileNavOpen(true)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground"
@@ -50,11 +50,11 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] lg:gap-6">
-          <div className="hidden min-h-0 lg:block">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] lg:gap-6 overflow-hidden">
+          <div className="hidden min-h-0 h-full flex-col lg:flex overflow-hidden">
             <ChatSidebar />
           </div>
-          <div className="min-h-0">{children}</div>
+          <div className="min-h-0 h-full flex flex-col overflow-hidden">{children}</div>
         </div>
 
         <div

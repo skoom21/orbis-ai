@@ -142,7 +142,7 @@ function ChatViewContent() {
       <ChatProvider value={chatContextValue}>
         <AddedChatProvider value={addedChatContextValue}>
           <MessagesViewProvider>
-            <div className="flex h-full w-full overflow-hidden">
+            <div className="flex h-full w-full flex-col overflow-hidden">
               <div
                 className={settings.maximizeChat
                   ? 'flex min-w-0 flex-1 flex-col overflow-hidden bg-card/50 text-foreground'
@@ -154,7 +154,7 @@ function ChatViewContent() {
                   sidePanelOpen={isSidePanelOpen}
                   onToggleSidePanel={() => setIsSidePanelOpen((current) => !current)}
                 />
-                <div className="flex-1 overflow-hidden">
+                <div className="flex flex-1 flex-col overflow-hidden">
                   <MessagesView 
                     messages={messages || []} 
                     isStreaming={isStreaming}
