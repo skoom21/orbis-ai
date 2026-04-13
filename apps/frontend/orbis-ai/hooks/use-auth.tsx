@@ -408,14 +408,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Check if user needs to confirm email
         if (data.user && !data.session) {
-          // Send OTP code for verification (this sends an actual 6-digit code)
-          await supabase.auth.signInWithOtp({
-            email: credentials.email,
-            options: {
-              shouldCreateUser: false, // User already created above
-            },
-          });
-          
           updateState({ isLoading: false });
           return {
             success: true,
@@ -520,17 +512,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 
   // --------------------------------------------------------------------------
-  // Resend OTP - use signInWithOtp which sends an actual OTP code
+  // Resend OTP - re-trigger the signup confirmation email
   // --------------------------------------------------------------------------
   const resendOtp = useCallback(
     async (email: string): Promise<{ success: boolean; error?: AuthError }> => {
       try {
-        // Use signInWithOtp which actually sends an OTP code
-        const { error: otpError } = await supabase.auth.signInWithOtp({
+        // Resend the signup confirmation email containing the OTP
+        const { error: otpError } = await supabase.auth.resend({
+          type: 'signup',
           email,
-          options: {
-            shouldCreateUser: false, // User already exists from signup
-          },
         });
 
         if (otpError) {

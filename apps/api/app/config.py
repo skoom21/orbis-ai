@@ -35,10 +35,10 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str = Field(default="", description="Google AI API key")
     GEMINI_MODEL: str = Field(default="gemini-2.0-flash-exp", description="Gemini model name")
     GEMINI_EMBEDDING_MODEL: str = Field(
-        default="models/embedding-001", 
+        default="models/gemini-embedding-001",
         description="Gemini embedding model"
     )
-    EMBEDDING_DIMENSION: int = Field(default=768, description="Embedding dimension")
+    EMBEDDING_DIMENSION: int = Field(default=768, description="Embedding dimension (truncated via output_dimensionality=768)")
     
     # Redis Configuration
     REDIS_URL: str = Field(
@@ -52,8 +52,10 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="JWT token expiry minutes")
     
     # External APIs (for future use)
-    AMADEUS_API_KEY: Optional[str] = Field(default=None, description="Amadeus API key")
-    AMADEUS_API_SECRET: Optional[str] = Field(default=None, description="Amadeus API secret")
+    AMADEUS_API_KEY: Optional[str] = Field(default=None, description="Amadeus API key (legacy)")
+    AMADEUS_API_SECRET: Optional[str] = Field(default=None, description="Amadeus API secret (legacy)")
+    LITEAPI_KEY: str = Field(default="sand_583409da-28e0-4ca1-ad0e-ddd61b78cb85", description="liteAPI key for hotel search")
+    SERPAPI_KEY: Optional[str] = Field(default=None, description="SerpApi key for Google Flights (free tier: 250/month)")
     
     # Logging
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")

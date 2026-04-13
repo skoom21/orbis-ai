@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
@@ -52,6 +52,17 @@ function ChatViewContent() {
       console.error('[ChatView] Stream error:', error)
     },
   });
+
+  // Auto-send first message if it was stored before navigation from /chat
+  const hasSentPending = useRef(false)
+  useEffect(() => {
+    if (hasSentPending.current || !conversationId || !session?.access_token || messagesLoading) return
+    const pending = sessionStorage.getItem('orbis-pending-first-message')
+    if (!pending) return
+    hasSentPending.current = true
+    sessionStorage.removeItem('orbis-pending-first-message')
+    sendMessage(pending)
+  }, [conversationId, session?.access_token, messagesLoading, sendMessage])
 
   const handleEditResubmit = useCallback(
     async (_messageId: string, content: string) => {
@@ -146,7 +157,7 @@ function ChatViewContent() {
               <div
                 className={settings.maximizeChat
                   ? 'flex min-w-0 flex-1 flex-col overflow-hidden bg-card/50 text-foreground'
-                  : 'flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card/50 text-foreground'}
+                  : 'flex min-w-0 flex-1 flex-col overflow-hidden  border border-border bg-card/50 text-foreground'}
               >
                 <ChatHeader
                   title={conversation?.title || 'Chat'}

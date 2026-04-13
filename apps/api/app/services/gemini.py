@@ -31,8 +31,11 @@ class GeminiService:
     
     def _build_system_prompt(self, agent_type: str = "orchestrator") -> str:
         """Build system prompt based on agent type."""
-        
-        base_prompt = """You are Orbis AI, an intelligent travel planning assistant with access to multiple specialized agents. 
+        from datetime import date
+        today = date.today().strftime("%B %d, %Y")
+
+        base_prompt = f"""You are Orbis AI, an intelligent travel planning assistant.
+        Today's date is {today}. Always use this date as your reference for all scheduling, departure dates, and travel planning.
         You help users plan comprehensive trips by coordinating between different services.
 
         Your capabilities include:
@@ -226,25 +229,30 @@ class GeminiService:
                 logger.warning("Gemini client not available for intent analysis")
                 return {"intent": "general", "entities": {}, "confidence": 0.0}
             
+            from datetime import date
+            today_str = date.today().strftime("%B %d, %Y")
+
             intent_prompt = f"""
+            Today's date is {today_str}. Use this as reference when interpreting relative dates like "next Wednesday" or "in 3 days".
+
             Analyze this travel-related message and identify the user's intent and key entities.
-            
+
             Message: "{user_message}"
-            
-            Classify the intent as one of:
-            - flight_search: Looking for flights
-            - hotel_search: Looking for hotels/accommodation
-            - itinerary_planning: Planning activities or full trip
-            - general_travel: General travel questions
-            - booking: Want to make a reservation
-            - budget_planning: Discussing costs/budget
-            
+
+            Classify the intent as EXACTLY one of these strings:
+            - flight_search: Looking for flights or asking about departure dates
+            - hotel_search: Looking for hotels, hostels, or accommodation
+            - itinerary_planning: Planning activities or a full trip itinerary
+            - general_travel: General travel questions or greetings
+            - booking: Want to make or confirm a reservation
+            - budget_planning: Discussing costs or budget
+
             Extract entities like:
-            - destinations (departure, arrival)
-            - dates (departure, return, stay dates)
-            - travelers (number of people, ages)
-            - preferences (budget, class, amenities)
-            
+            - destinations (departure city, arrival city)
+            - dates (departure date as YYYY-MM-DD if determinable, return date, duration)
+            - travelers (number of people)
+            - preferences (budget level, accommodation type, travel class)
+
             Respond in this exact JSON format:
             {{
                 "intent": "intent_type",
@@ -355,6 +363,41 @@ class GeminiService:
             logger.error("Error generating conversation title", error=str(e))
             return "Travel Conversation"
     
+    async def get_embedding(self, text: str) -> Optional[List[float]]:
+        """Generate an embedding vector for the given text using Gemini embedding model.
+
+        Uses output_dimensionality=768 to stay within pgvector IVFFlat index limit.
+        The underlying SDK call is synchronous, so we offload it to a thread executor
+        to avoid blocking the asyncio event loop.
+        """
+        import asyncio
+        from google.genai import types as genai_types
+
+        if not self.client:
+            logger.warning("Gemini client not initialized, cannot generate embedding")
+            return None
+
+        cleaned = text.replace("\n", " ").strip()
+        if not cleaned:
+            return None
+
+        def _sync_embed() -> Optional[List[float]]:
+            try:
+                response = self.client.models.embed_content(
+                    model=settings.GEMINI_EMBEDDING_MODEL,
+                    contents=cleaned,
+                    config=genai_types.EmbedContentConfig(output_dimensionality=768),
+                )
+                if response and response.embeddings:
+                    return list(response.embeddings[0].values)
+                logger.warning("Empty embedding response from Gemini")
+                return None
+            except Exception as e:
+                logger.error("Error generating embedding", error=str(e))
+                return None
+
+        return await asyncio.to_thread(_sync_embed)
+
     def close(self):
         """Close the client connection."""
         # The genai.Client doesn't have a close() method

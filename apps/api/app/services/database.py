@@ -380,9 +380,9 @@ class DatabaseService:
                     .eq("id", conversation_id)\
                     .eq("user_id", user_id)\
                     .execute()
-                if result.data:
-                    logger.info("Conversation deleted", conversation_id=conversation_id)
-                    return True
+                # Supabase v2+ returns empty list on delete by default, treat no exception as success
+                logger.info("Conversation deleted", conversation_id=conversation_id)
+                return True
             except Exception as e:
                 logger.error("Error deleting conversation", conversation_id=conversation_id, error=str(e))
                 self.circuit_breaker.record_failure()

@@ -1,8 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { PanelRightClose, PanelRightOpen, FileCode2 } from 'lucide-react'
+import { PanelRightClose, PanelRightOpen, FileCode2, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface ChatArtifactItem {
   id: string
@@ -28,69 +33,30 @@ export function ChatSidePanel({ isOpen, onToggle, artifacts }: ChatSidePanelProp
   }, [artifacts, selectedArtifactId])
 
   if (!isOpen) {
-    return (
-      <aside className="hidden border-l border-border bg-background/70 lg:flex lg:w-12 lg:flex-col lg:items-center lg:py-3" aria-label="Artifacts side panel collapsed">
-        <Button variant="ghost" size="icon" onClick={onToggle} aria-label="Open side panel" aria-expanded={false}>
-          <PanelRightOpen className="h-4 w-4" />
-        </Button>
-      </aside>
-    )
+    return null
   }
 
   return (
-    <aside className="hidden w-80 flex-col border-l border-border bg-background/70 lg:flex" aria-label="Artifacts side panel">
-      <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Artifacts</h2>
-          <p className="text-xs text-muted-foreground">Panel mount for generated outputs</p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={onToggle} aria-label="Close side panel" aria-expanded={true}>
-          <PanelRightClose className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="grid min-h-0 flex-1 grid-rows-[auto,1fr]">
-        <div className="max-h-40 overflow-y-auto border-b border-border p-2" role="listbox" aria-label="Artifact list">
-          {artifacts.length === 0 ? (
-            <p className="text-xs text-muted-foreground" role="status" aria-live="polite">No artifacts yet.</p>
-          ) : (
-            <div className="space-y-1">
-              {artifacts.map((artifact) => {
-                const selected = artifact.id === selectedArtifact?.id
-                return (
-                  <button
-                    key={artifact.id}
-                    type="button"
-                    onClick={() => setSelectedArtifactId(artifact.id)}
-                    className={selected
-                      ? 'w-full rounded-md border border-primary/40 bg-primary/10 px-2 py-1.5 text-left'
-                      : 'w-full rounded-md border border-border px-2 py-1.5 text-left hover:bg-muted/50'}
-                    role="option"
-                    aria-selected={selected}
-                  >
-                    <div className="truncate text-xs font-medium text-foreground">{artifact.label}</div>
-                    <div className="text-[10px] text-muted-foreground">{new Date(artifact.createdAt).toLocaleString()}</div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+    <aside className="hidden border-l border-border bg-background lg:flex lg:w-[320px] lg:flex-col shrink-0 transition-all duration-300" aria-label="Artifacts side panel">
+      {/* Inner container */}
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-background/80 backdrop-blur-xl shrink-0 h-[61px]">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Trip Workspace</h2>
+          </div>
         </div>
 
-        <div className="overflow-y-auto p-3" aria-live="polite">
-          {selectedArtifact ? (
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
-                <FileCode2 className="h-3.5 w-3.5" />
-                {selectedArtifact.label}
-              </div>
-              <pre className="overflow-x-auto rounded-md border border-border bg-muted/60 p-2 text-[11px] text-foreground">
-                {JSON.stringify(selectedArtifact.data ?? {}, null, 2)}
-              </pre>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Artifacts will appear here when available.</p>
-          )}
+        <div className="flex-1 overflow-y-auto bg-background p-4 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 ring-1 ring-primary/20">
+            <Globe className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-[15px] font-medium text-foreground mb-1">Your Trip Plan</h3>
+          <p className="text-[13px] text-muted-foreground max-w-[200px] mb-4">
+            Flights, hotels, and daily itineraries will appear here as we plan.
+          </p>
+          <Button variant="outline" size="sm" className="w-full text-xs font-medium">
+            Start a new plan
+          </Button>
         </div>
       </div>
     </aside>

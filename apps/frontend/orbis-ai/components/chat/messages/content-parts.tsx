@@ -2,7 +2,15 @@ import React, { memo, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Link2, Wrench, FileText } from 'lucide-react'
-import type { MessageContentPart, MessageSourceItem, MessageAttachmentItem } from '../types'
+import type {
+  MessageContentPart,
+  MessageSourceItem,
+  MessageAttachmentItem,
+  HotelResultItem,
+  BookingSummaryItem,
+} from '../types'
+import { FlightCard, HotelCard, ItineraryCard, HotelResultsCarousel, BookingStatusCards } from './travel-cards'
+import { cn } from '@/lib/utils'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -72,9 +80,151 @@ function parsePart(value: unknown): MessageContentPart | null {
         label: typeof value.label === 'string' ? value.label : 'Artifact',
         data: value.data,
       }
+    case 'hotel-results':
+      return {
+        type: 'hotel-results',
+        title: typeof value.title === 'string' ? value.title : undefined,
+        subtitle: typeof value.subtitle === 'string' ? value.subtitle : undefined,
+        items: parseHotelItems(value.items),
+      }
+    case 'booking-update':
+      return {
+        type: 'booking-update',
+        title: typeof value.title === 'string' ? value.title : undefined,
+        items: parseBookingItems(value.items),
+      }
     default:
       return null
   }
+}
+
+function toNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
+function parseHotelItem(value: unknown): HotelResultItem | null {
+  if (!isRecord(value)) return null
+
+  const id = typeof value.id === 'string' ? value.id : typeof value.hotelId === 'string' ? value.hotelId : undefined
+  const name = typeof value.name === 'string' ? value.name : typeof value.hotel_name === 'string' ? value.hotel_name : undefined
+  if (!id || !name) return null
+
+  const price =
+    toNumber(value.total_price_usd) ??
+    toNumber(value.price) ??
+    toNumber(value.totalPrice) ??
+    toNumber((value as Record<string, unknown>).price_per_night)
+
+  return {
+    id,
+    name,
+    city: typeof value.city === 'string' ? value.city : undefined,
+    address: typeof value.address === 'string' ? value.address : undefined,
+    description: typeof value.description === 'string' ? value.description : undefined,
+    rating: toNumber(value.rating),
+    stars: toNumber(value.stars),
+    photo:
+      typeof value.photo === 'string'
+        ? value.photo
+        : typeof value.main_photo === 'string'
+          ? value.main_photo
+          : undefined,
+    price,
+    currency: typeof value.currency === 'string' ? value.currency : 'USD',
+    roomType: typeof value.room_type === 'string' ? value.room_type : typeof value.roomType === 'string' ? value.roomType : undefined,
+    offerId: typeof value.offer_id === 'string' ? value.offer_id : typeof value.offerId === 'string' ? value.offerId : undefined,
+    source: value,
+  }
+}
+
+function parseHotelItems(value: unknown): HotelResultItem[] {
+  if (!Array.isArray(value)) return []
+  return value.map(parseHotelItem).filter((item): item is HotelResultItem => Boolean(item))
+}
+
+function parseBookingItem(value: unknown): BookingSummaryItem | null {
+  if (!isRecord(value)) return null
+
+  const bookingId =
+    typeof value.booking_id === 'string'
+      ? value.booking_id
+      : typeof value.bookingId === 'string'
+        ? value.bookingId
+        : typeof value.id === 'string'
+          ? value.id
+          : undefined
+
+  if (!bookingId) return null
+
+  return {
+    bookingId,
+    status: typeof value.status === 'string' ? value.status : undefined,
+    hotelName:
+      typeof value.hotel === 'string'
+        ? value.hotel
+        : typeof value.hotel_name === 'string'
+          ? value.hotel_name
+          : undefined,
+    totalPrice: toNumber(value.total_price) ?? toNumber(value.totalPrice) ?? toNumber(value.price),
+    currency: typeof value.currency === 'string' ? value.currency : 'USD',
+    source: value,
+  }
+}
+
+function parseBookingItems(value: unknown): BookingSummaryItem[] {
+  if (!Array.isArray(value)) return []
+  return value.map(parseBookingItem).filter((item): item is BookingSummaryItem => Boolean(item))
+}
+
+function parseStructuredPayload(value: unknown): MessageContentPart[] {
+  if (!isRecord(value)) return []
+
+  if (Array.isArray(value.hotels)) {
+    const items = parseHotelItems(value.hotels)
+    if (items.length > 0) {
+      return [
+        {
+          type: 'hotel-results',
+          title: typeof value.title === 'string' ? value.title : 'Available Hotels',
+          subtitle: typeof value.note === 'string' ? value.note : undefined,
+          items,
+        },
+      ]
+    }
+  }
+
+  if (typeof value.status === 'string' && (typeof value.booking_id === 'string' || typeof value.bookingId === 'string')) {
+    const parsedBooking = parseBookingItem(value)
+    if (parsedBooking) {
+      return [
+        {
+          type: 'booking-update',
+          title: 'Booking Update',
+          items: [parsedBooking],
+        },
+      ]
+    }
+  }
+
+  if (Array.isArray(value.bookings)) {
+    const bookings = parseBookingItems(value.bookings)
+    if (bookings.length > 0) {
+      return [
+        {
+          type: 'booking-update',
+          title: typeof value.title === 'string' ? value.title : 'Booking Updates',
+          items: bookings,
+        },
+      ]
+    }
+  }
+
+  return []
 }
 
 export function parseMessageParts(content: string): MessageContentPart[] {
@@ -94,6 +244,11 @@ export function parseMessageParts(content: string): MessageContentPart[] {
     if (isRecord(parsed) && Array.isArray(parsed.parts)) {
       const parts = parsed.parts.map(parsePart).filter((part): part is MessageContentPart => Boolean(part))
       return parts.length > 0 ? parts : [{ type: 'markdown', markdown: content }]
+    }
+
+    const structured = parseStructuredPayload(parsed)
+    if (structured.length > 0) {
+      return structured
     }
   } catch {
     return [{ type: 'markdown', markdown: content }]
@@ -122,7 +277,31 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
 
         if (part.type === 'markdown') {
           return (
-            <ReactMarkdown key={`md-${index}`} remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown 
+              key={`md-${index}`} 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                ul: ({node, ...props}) => <ul className="pl-5 list-disc space-y-1 mb-4 text-[15px]" {...props} />,
+                ol: ({node, ...props}) => <ol className="pl-5 list-decimal space-y-1 mb-4 text-[15px]" {...props} />,
+                li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                table: ({node, ...props}) => <div className="overflow-x-auto mb-4 w-full rounded-lg border border-border/80"><table className="w-full text-left border-collapse text-[14px]" {...props} /></div>,
+                th: ({node, ...props}) => <th className="border-b border-border/80 p-3 font-semibold bg-muted/30 text-foreground" {...props} />,
+                td: ({node, ...props}) => <td className="border-b border-border/40 p-3 align-top" {...props} />,
+                p: ({node, ...props}) => <p className="mb-4 text-[15px] leading-relaxed" {...props} />,
+                h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 mt-6 text-foreground" {...props} />,
+                h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-5 text-foreground" {...props} />,
+                h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-3 mt-4 text-foreground" {...props} />,
+                strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+                code: ({node, inline, className, children, ...props}: any) => {
+                   const match = /language-(\w+)/.exec(className || '')
+                   const lang = match ? match[1] : ''
+                   if (!inline && lang === 'flight') return <FlightCard data={String(children)} />
+                   if (!inline && lang === 'hotel') return <HotelCard data={String(children)} />
+                   if (!inline && lang === 'itinerary') return <ItineraryCard data={String(children)} />
+                   return <code className={cn("bg-muted/50 px-1.5 py-0.5 rounded text-[13px] font-mono", !inline && "block p-4 overflow-x-auto mb-4 border border-border/50", className)} {...props}>{children}</code>
+                }
+              }}
+            >
               {part.markdown}
             </ReactMarkdown>
           )
@@ -197,6 +376,21 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
               </div>
             </div>
           )
+        }
+
+        if (part.type === 'hotel-results') {
+          return (
+            <HotelResultsCarousel
+              key={`hotel-results-${index}`}
+              title={part.title}
+              subtitle={part.subtitle}
+              items={part.items}
+            />
+          )
+        }
+
+        if (part.type === 'booking-update') {
+          return <BookingStatusCards key={`booking-update-${index}`} title={part.title} items={part.items} />
         }
 
         return (

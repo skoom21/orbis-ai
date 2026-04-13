@@ -102,11 +102,12 @@ export function MessagesView({
 
     const el = scrollRef.current;
     if (streamingMessage) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      el.scrollTo({ top: el.scrollHeight, behavior: 'auto' });
     } else {
       el.scrollTop = el.scrollHeight;
     }
-  }, [visibleMessages.length, streamingMessage, autoScrollEnabled, isAtBottom])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleMessages.length, streamingMessage])
 
   const handleScroll = () => {
     if (scrollFrameRef.current !== null) return
@@ -118,7 +119,7 @@ export function MessagesView({
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
 
-    const atBottom = distanceFromBottom <= 24
+    const atBottom = distanceFromBottom <= 180
     setIsAtBottom(atBottom)
 
     if (scrollVisibilityTimeoutRef.current) {
@@ -126,10 +127,10 @@ export function MessagesView({
     }
 
     scrollVisibilityTimeoutRef.current = setTimeout(() => {
-      setShowScroll(distanceFromBottom > 120)
+      setShowScroll(distanceFromBottom > 264)
     }, 100)
 
-    if (streamingMessage && distanceFromBottom > 120) {
+    if (streamingMessage && distanceFromBottom > 264) {
       setAutoScrollEnabled(false)
       setSetting('autoScroll', false)
     }
@@ -169,51 +170,76 @@ export function MessagesView({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto flex flex-col pt-4 sm:pt-6 [overflow-anchor:none]"
         role="log"
         aria-label="Chat messages"
         aria-live="polite"
         aria-relevant="additions text"
         aria-busy={Boolean(streamingMessage)}
       >
-      {visibleMessages.length === 0 && !streamingMessage && (
-        <div className="flex h-full items-center justify-center text-muted-foreground" role="status" aria-live="polite">
+      {visibleMessages.length === 0 && !streamingMessage ? (
+        <div className="flex w-full flex-col items-center justify-start text-muted-foreground mt-4 sm:mt-8 lg:mt-16 mb-8" role="status" aria-live="polite">
           {emptyState || 'No messages yet. Start the conversation!'}
         </div>
+      ) : (
+        <div className="mt-auto flex flex-col gap-8 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-36">
+          {visibleMessages.map((msg, index) => {
+            const siblingMeta = getSiblingMeta(msg.id)
+            const msgDate = new Date(msg.created_at || Date.now());
+            const isToday = msgDate.toDateString() === new Date().toDateString();
+            const dateLabel = isToday ? 'Today' : msgDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            let showDateHeader = false;
+            if (index === 0) {
+              showDateHeader = true;
+            } else {
+              const prevMsgDate = new Date(visibleMessages[index - 1].created_at || Date.now());
+              if (msgDate.toDateString() !== prevMsgDate.toDateString()) {
+                showDateHeader = true;
+              }
+            }
+
+            return (
+              <React.Fragment key={msg.id}>
+                {showDateHeader && (
+                  <div className="sticky top-2 z-10 mx-auto flex w-fit items-center justify-center rounded-full bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-md border border-border/50 shadow-sm">
+                    {dateLabel}
+                  </div>
+                )}
+                <Message 
+ 
+                key={msg.id} 
+                id={msg.id}
+                role={msg.role} 
+                content={msg.content} 
+                createdAt={msg.created_at}
+                onRegenerate={onRegenerate}
+                onEditResubmit={onEditResubmit}
+                onContinue={onContinue}
+                onFork={onFork}
+                onFeedback={onFeedback}
+                siblingIndex={siblingMeta.siblingIndex}
+                siblingCount={siblingMeta.siblingCount}
+                onPrevSibling={() => cycleSibling(msg.id, -1)}
+                onNextSibling={() => cycleSibling(msg.id, 1)}
+              />
+              </React.Fragment>
+            )
+          })}
+          {isStreaming && (
+            <Message 
+              role="assistant" 
+              content={streamingMessage || ''} 
+              createdAt={new Date().toISOString()}
+              isStreaming
+            />
+          )}
+          <div className="sr-only" aria-live="polite">
+            {streamingMessage ? 'Assistant is generating a response.' : 'Assistant response complete.'}
+          </div>
+          <div ref={bottomRef} className="h-4" />
+        </div>
       )}
-      {visibleMessages.map((msg) => {
-        const siblingMeta = getSiblingMeta(msg.id)
-        return (
-          <Message 
-            key={msg.id} 
-            id={msg.id}
-            role={msg.role} 
-            content={msg.content} 
-            createdAt={msg.created_at}
-            onRegenerate={onRegenerate}
-            onEditResubmit={onEditResubmit}
-            onContinue={onContinue}
-            onFork={onFork}
-            onFeedback={onFeedback}
-            siblingIndex={siblingMeta.siblingIndex}
-            siblingCount={siblingMeta.siblingCount}
-            onPrevSibling={() => cycleSibling(msg.id, -1)}
-            onNextSibling={() => cycleSibling(msg.id, 1)}
-          />
-        )
-      })}
-      {isStreaming && (
-        <Message 
-          role="assistant" 
-          content={streamingMessage || ''} 
-          createdAt={new Date().toISOString()}
-          isStreaming
-        />
-      )}
-      <div className="sr-only" aria-live="polite">
-        {streamingMessage ? 'Assistant is generating a response.' : 'Assistant response complete.'}
-      </div>
-      <div ref={bottomRef} />
       </div>
       {showScroll && (
         <button
@@ -225,27 +251,13 @@ export function MessagesView({
               scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
             }
           }}
-          className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-lg hover:bg-muted transition-colors"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 rounded-full border border-border bg-background/90 px-4 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur-xl hover:bg-muted/80 transition-all z-20"
           aria-label="Scroll to latest"
         >
-          <ArrowDown className="h-4 w-4 text-foreground" />
+          <ArrowDown className="h-4 w-4" />
+          <span>New messages ↓</span>
         </button>
       )}
-      <button
-        type="button"
-        onClick={() => {
-          const next = !autoScrollEnabled
-          setAutoScrollEnabled(next)
-          setSetting('autoScroll', next)
-          if (next && scrollRef.current) {
-            scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-          }
-        }}
-        className="absolute bottom-16 right-4 rounded-md border border-border bg-card px-2 py-1 text-[10px] text-muted-foreground hover:bg-muted"
-        aria-label={autoScrollEnabled ? 'Disable auto-scroll' : 'Enable auto-scroll'}
-      >
-        Auto: {autoScrollEnabled ? 'On' : 'Off'}
-      </button>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { MemoizedMessageContentParts } from './content-parts';
 
@@ -125,28 +126,23 @@ function MessageComponent({
   return (
     <div 
       className={cn(
-        "group flex w-full gap-4 px-4 py-3 hover:bg-muted/50 transition-colors", 
-        isUser ? "flex-row-reverse" : "flex-row"
+        "group flex w-full p-4 sm:p-5 rounded-2xl md:rounded-3xl hover:bg-muted/50 transition-colors", 
+        isUser ? "justify-end" : "justify-start"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="article"
       aria-label={`${role} message`}
     >
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage src={isUser ? "/user-avatar.png" : "/bot-avatar.png"} />
-        <AvatarFallback>{isUser ? "U" : "AI"}</AvatarFallback>
-      </Avatar>
-      
       <div className={cn(
-        "flex max-w-[85%] flex-col gap-2",
-        isUser ? "items-end" : "items-start"
+        "flex flex-col gap-2 w-full",
+        isUser ? "max-w-[85%] sm:max-w-[75%] items-end" : "max-w-full items-start"
       )}>
         <div className={cn(
-          "prose prose-sm dark:prose-invert wrap-break-word max-w-none",
+          "prose prose-sm dark:prose-invert wrap-break-word",
           isUser
-            ? "bg-primary text-primary-foreground p-3 rounded-2xl rounded-tr-sm"
-            : "bg-muted/60 text-foreground p-3 rounded-2xl rounded-tl-sm"
+            ? "max-w-none bg-primary text-primary-foreground p-3 sm:px-4 rounded-2xl rounded-tr-sm"
+            : "max-w-none w-full text-foreground"
         )}>
           {isEditing ? (
             <div className="space-y-2">
@@ -205,7 +201,9 @@ function MessageComponent({
         )}>
           {siblingCount > 1 && (
             <div className="mr-1 inline-flex items-center gap-1 rounded-full border border-border bg-background/70 px-1 py-0.5">
-              <Button
+              <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -216,10 +214,17 @@ function MessageComponent({
               >
                 <ChevronLeft className="h-3 w-3" />
               </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Previous version</p>
+              </TooltipContent>
+            </Tooltip>
               <span className="min-w-10 text-center text-[10px] font-medium">
                 {siblingIndex} / {siblingCount}
               </span>
-              <Button
+              <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -230,6 +235,11 @@ function MessageComponent({
               >
                 <ChevronRight className="h-3 w-3" />
               </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Next version</p>
+              </TooltipContent>
+            </Tooltip>
             </div>
           )}
           {createdAt && (
@@ -238,7 +248,9 @@ function MessageComponent({
             </span>
           )}
           {actionCapabilities.copy !== false && (
-            <Button
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
               type="button"
               variant="ghost"
               size="icon"
@@ -248,6 +260,11 @@ function MessageComponent({
             >
               <Copy className="h-3 w-3" />
             </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copy message</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {isUser && actionCapabilities.edit !== false && !isStreaming && (
             <Button
@@ -262,7 +279,9 @@ function MessageComponent({
             </Button>
           )}
           {!isUser && actionCapabilities.audio !== false && !isStreaming && (
-            <Button
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
               type="button"
               variant="ghost"
               size="icon"
@@ -272,9 +291,16 @@ function MessageComponent({
             >
               {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
             </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isSpeaking ? "Stop reading" : "Read aloud"}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {!isUser && actionCapabilities.regenerate !== false && onRegenerate && !isStreaming && (
-            <Button
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
               type="button"
               variant="ghost"
               size="icon"
@@ -284,6 +310,11 @@ function MessageComponent({
             >
               <RefreshCw className="h-3 w-3" />
             </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Regenerate</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {!isUser && actionCapabilities.continue !== false && onContinue && id && !isStreaming && (
             <Button

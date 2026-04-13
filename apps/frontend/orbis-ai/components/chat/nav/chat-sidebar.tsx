@@ -15,6 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface ChatSidebarProps {
   className?: string
@@ -27,7 +32,7 @@ export function ChatSidebar({ className, onConversationSelect }: ChatSidebarProp
   const router = useRouter()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [creating, setCreating] = useState(false)
+
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(50)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -37,6 +42,10 @@ export function ChatSidebar({ className, onConversationSelect }: ChatSidebarProp
     queryKey: ['conversations'],
     queryFn: () => apiClient.getConversations(),
     enabled: !!session?.access_token,
+    staleTime: 0, // always consider stale so it refetches on mount/focus
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30 * 1000, // poll every 30s as fallback
   })
 
   const filtered = useMemo(() => {
@@ -79,15 +88,7 @@ export function ChatSidebar({ className, onConversationSelect }: ChatSidebarProp
   }, [filtered.length])
 
   const handleCreate = async () => {
-    if (creating) return
-    setCreating(true)
-    try {
-      const convo = await apiClient.createConversation('New Trip Chat')
-      await queryClient.invalidateQueries({ queryKey: ['conversations'] })
-      router.push(`/chat/${convo.id}`)
-    } finally {
-      setCreating(false)
-    }
+    router.push('/chat')
   }
 
   const handleCopyConversationLink = async (conversationId: string) => {
@@ -109,25 +110,34 @@ export function ChatSidebar({ className, onConversationSelect }: ChatSidebarProp
       if (pathname === `/chat/${conversationId}`) {
         router.push('/chat')
       }
+    } catch (err) {
+      console.error('[Sidebar] Failed to delete conversation:', err)
+      window.alert('Failed to delete conversation. Please try again.')
     } finally {
       setDeletingConversationId(null)
     }
   }
 
   return (
-    <aside className={cn('flex h-full w-full flex-col rounded-xl border border-border bg-card/50', className)} aria-label="Conversations sidebar">
+    <aside className={cn('flex h-full w-full flex-col', className)} aria-label="Conversations sidebar">
       <div className="border-b border-border p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">Conversations</h2>
-          <button
-            onClick={handleCreate}
-            className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-            aria-label="Create new conversation"
-            disabled={creating}
-          >
-            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-            New
-          </button>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleCreate}
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                aria-label="Create new conversation"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Create new conversation</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -185,15 +195,22 @@ export function ChatSidebar({ className, onConversationSelect }: ChatSidebarProp
                   </div>
                 </Link>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={`Conversation actions for ${conversation.title}`}
-                      className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground opacity-100 transition-opacity hover:bg-muted hover:text-foreground md:h-7 md:w-7 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`Conversation actions for ${conversation.title}`}
+                          className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground opacity-100 transition-opacity hover:bg-muted hover:text-foreground md:h-7 md:w-7 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Conversation actions</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem disabled>Rename</DropdownMenuItem>
                     <DropdownMenuItem disabled>Duplicate</DropdownMenuItem>
@@ -206,7 +223,10 @@ export function ChatSidebar({ className, onConversationSelect }: ChatSidebarProp
                     <DropdownMenuItem
                       variant="destructive"
                       disabled={deletingConversationId === conversation.id}
-                      onClick={() => handleDeleteConversation(conversation.id)}
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        handleDeleteConversation(conversation.id)
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                       Delete

@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Map, Hotel, Wallet, Calendar } from 'lucide-react'
+import { Sparkles, MapPin, PlaneTakeoff, Hotel, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ConversationStarter {
@@ -11,24 +11,24 @@ interface ConversationStarter {
 
 const starters: ConversationStarter[] = [
   {
-    icon: Map,
-    title: 'Plan a Trip',
-    prompt: 'Plan a 7-day trip to Paris with a mid-range budget.',
+    icon: MapPin,
+    title: 'Plan a trip to Bali',
+    prompt: 'Help me plan a 7-day trip to Bali focusing on beaches and culture.',
+  },
+  {
+    icon: PlaneTakeoff,
+    title: 'Find flights from Karachi to Dubai',
+    prompt: 'Find me the best flight options from Karachi to Dubai for next month.',
+  },
+  {
+    icon: CalendarDays,
+    title: 'Build a Tokyo itinerary',
+    prompt: 'Create a 5-day itinerary for Tokyo with a mix of modern and traditional sights.',
   },
   {
     icon: Hotel,
-    title: 'Find Hotels',
-    prompt: 'Find boutique hotels in Tokyo near Shibuya under $200/night.',
-  },
-  {
-    icon: Calendar,
-    title: 'Build Itinerary',
-    prompt: 'Create a 5-day itinerary for Rome with food and culture focus.',
-  },
-  {
-    icon: Wallet,
-    title: 'Budget Planner',
-    prompt: 'Help me budget a 10-day Southeast Asia trip for two people.',
+    title: 'Find boutique hotels in Paris',
+    prompt: 'Recommend some nice boutique hotels in Paris under $200 per night.',
   },
 ]
 

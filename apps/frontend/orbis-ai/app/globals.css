@@ -5,38 +5,41 @@
 
 /* Switched to dark mode as default - Dark Navy background with Paper White text */
 :root {
-  --background: #181816; /* Updated from colors-example.md */
-  --foreground: #e5f0e8; /* Updated from colors-example.md */
-  --card: #242f45; /* Keeping existing card for now, or should I derive from background? */
-  --card-foreground: #e5f0e8;
-  --popover: #242f45;
-  --popover-foreground: #e5f0e8;
-  --primary: #6271b7; /* Updated from colors-example.md */
+  --background: #0f111a; /* Warm deep indigo-black */
+  --foreground: #f3f4f6; /* Off-white for better readability */
+  --surface-1: #161925; /* Slightly lighter surface for cards */
+  --surface-2: #1e2233; /* For elevated elements like hover states */
+  --surface-3: #282d44; /* For highest elevated elements, modals */
+  --card: var(--surface-1);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+  --primary: #4f64c6; /* Vibrant Orbis blue/indigo */
   --primary-foreground: #ffffff;
-  --secondary: #a9b5d1; /* Updated from colors-example.md */
-  --secondary-foreground: #181816; /* Dark text for light secondary */
-  --muted: #3d4d6a;
-  --muted-foreground: #a0a8b8;
-  --accent: #bc3824; /* Updated from colors-example.md */
+  --secondary: #282d44; /* Muted surface tone */
+  --secondary-foreground: #cbd5e1;
+  --muted: #1e2233;
+  --muted-foreground: #8b94ab; /* Muted text */
+  --accent: #d94f3a; /* Sunrise amber/terra cotta for actions */
   --accent-foreground: #ffffff;
-  --destructive: #bc3824;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #3d4d6a;
-  --input: #3d4d6a;
-  --ring: #6271b7;
-  --chart-1: #6271b7;
-  --chart-2: #bc3824;
-  --chart-3: #a9b5d1;
-  --chart-4: #8896b3;
-  --chart-5: #a5b1c5;
-  --sidebar: #1a2235;
-  --sidebar-foreground: #e8e8e6;
-  --sidebar-primary: #6b7dc4;
-  --sidebar-primary-foreground: #1a2235;
-  --sidebar-accent: #db5844;
-  --sidebar-accent-foreground: #e8e8e6;
-  --sidebar-border: #3d4d6a;
-  --sidebar-ring: #6b7dc4;
+  --border: #282d44;
+  --input: #1e2233;
+  --ring: #4f64c6;
+  --chart-1: #4f64c6;
+  --chart-2: #d94f3a;
+  --chart-3: #8b94ab;
+  --chart-4: #64748b;
+  --chart-5: #94a3b8;
+  --sidebar: #0f111a;
+  --sidebar-foreground: #f3f4f6;
+  --sidebar-primary: #4f64c6;
+  --sidebar-primary-foreground: #0f111a;
+  --sidebar-accent: #d94f3a;
+  --sidebar-accent-foreground: #f3f4f6;
+  --sidebar-border: #282d44;
+  --sidebar-ring: #4f64c6;
   --font-sans: "Open Sans", sans-serif;
   --font-serif: "Istok Web", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -53,6 +56,29 @@
   --spacing: 0.25rem;
   --duration: 10s;
   --gap: 1rem;
+
+  /* Critique Recommended Type Scale */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  /* Critique Recommended Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Custom component colors */
+  --user-bubble: #3f518a; /* Dusty blue/deep navy for user bubbles */
 }
 
 /* Light mode override if needed */
@@ -82,6 +108,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -112,6 +141,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-user-bubble: var(--user-bubble);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
@@ -136,6 +167,25 @@
   --tracking-wide: calc(var(--tracking-normal) + 0.025em);
   --tracking-wider: calc(var(--tracking-normal) + 0.05em);
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+
+  /* Override specific typography and spacing classes, or let them fall back onto TW4 standard */
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-lg: var(--text-md);
+  --text-xl: var(--text-lg);
+  --text-2xl: var(--text-xl);
+  --text-3xl: var(--text-2xl);
+  
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-5: var(--space-5);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-10: var(--space-10);
+  --spacing-12: var(--space-12);
 }
 
 body {
@@ -203,4 +253,25 @@ body {
 
 .animate-shiny-text {
   animation: shiny-text 3s ease-in-out infinite;
+}
+
+/* Custom elegant scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  border-radius: 12px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted-foreground) 50%, transparent);
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
 }

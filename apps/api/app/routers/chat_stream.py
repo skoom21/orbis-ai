@@ -8,9 +8,14 @@ import asyncio
 from app.api.dependencies.auth import get_optional_user
 from app.services.database import db_service
 from app.services.gemini import gemini_service
+from app.services.rag_service import RAGService
 from app.agents.langgraph_orchestrator import LangGraphOrchestrator
 from app.config import settings
 from app.logging_config import get_logger
+
+rag_service = RAGService()
+# Singleton orchestrator — avoid rebuilding LangGraph on every request
+_orchestrator = LangGraphOrchestrator()
 
 logger = get_logger("api.chat_stream")
 
@@ -58,15 +63,26 @@ async def stream_chat(
     
     # Get conversation history
     history = await db_service.get_conversation_messages(conversation_id, limit=10)
-    
+
+    # Build RAG context from travel guides + user preferences
+    rag_context = await rag_service.build_prompt_context(
+        query=request.message,
+        user_id=user_id,
+        match_threshold=0.5,
+        guide_limit=4,
+        pref_limit=2,
+    )
+    if rag_context:
+        logger.info("RAG context retrieved", context_length=len(rag_context), conversation_id=conversation_id)
+
     # Convert history to context dict
     context = {
         "conversation_id": conversation_id,
         "history": history,
+        "rag_context": rag_context,
     }
-    
-    # Initialize LangGraph orchestrator
-    orchestrator = LangGraphOrchestrator()
+
+    orchestrator = _orchestrator
     
     async def event_generator():
         try:
@@ -137,6 +153,20 @@ async def stream_chat(
                     "token_count": token_count
                 }
             )
+
+            # Auto-generate conversation title after the first exchange
+            conv_messages = await db_service.get_conversation_messages(conversation_id, limit=3)
+            if len(conv_messages) == 2:
+                try:
+                    title_messages = [
+                        {"role": "user", "content": request.message},
+                        {"role": "assistant", "content": full_response},
+                    ]
+                    generated_title = await gemini_service.generate_conversation_title(title_messages)
+                    await db_service.update_conversation_title(conversation_id, generated_title)
+                    logger.info("Auto-generated conversation title", title=generated_title, conversation_id=conversation_id)
+                except Exception as title_err:
+                    logger.warning("Could not auto-generate title", error=str(title_err))
             
             logger.info(
                 "Chat stream completed successfully",

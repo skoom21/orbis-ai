@@ -9,7 +9,7 @@ from app.logging_config import get_logger
 
 logger = get_logger("api.conversations")
 
-router = APIRouter(prefix="/conversations", tags=["conversations"])
+router = APIRouter(prefix="/conversations", tags=["conversations"], redirect_slashes=False)
 
 # Models
 class CreateConversationRequest(BaseModel):
@@ -33,7 +33,7 @@ class MessageResponse(BaseModel):
 
 # Endpoints
 
-@router.get("/", response_model=List[ConversationResponse])
+@router.get("", response_model=List[ConversationResponse])
 async def list_conversations(
     limit: int = Query(20, ge=1, le=100),
     current_user: Dict[str, Any] = Depends(get_optional_user)
@@ -43,7 +43,7 @@ async def list_conversations(
     conversations = await db_service.get_user_conversations(user_id, limit=limit)
     return conversations
 
-@router.post("/", response_model=ConversationResponse)
+@router.post("", response_model=ConversationResponse)
 async def create_conversation(
     request: CreateConversationRequest,
     current_user: Dict[str, Any] = Depends(get_optional_user)
@@ -89,6 +89,23 @@ async def delete_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found or could not be deleted")
         
     return {"message": "Conversation deleted successfully"}
+
+@router.patch("/{conversation_id}")
+async def update_conversation(
+    conversation_id: str,
+    data: dict,
+    current_user: Dict[str, Any] = Depends(get_optional_user)
+):
+    """Update a conversation's title."""
+    user_id = current_user["id"]
+    title = data.get("title")
+    if not title:
+        raise HTTPException(status_code=400, detail="title field required")
+    success = await db_service.update_conversation_title(conversation_id, title)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"id": conversation_id, "title": title}
+
 
 @router.get("/{conversation_id}/messages", response_model=List[MessageResponse])
 async def get_messages(

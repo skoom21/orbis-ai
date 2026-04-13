@@ -10,6 +10,12 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   useEffect(() => {
+    const handleToggle = () => setMobileNavOpen(true)
+    document.addEventListener('toggle-mobile-sidebar', handleToggle)
+    return () => document.removeEventListener('toggle-mobile-sidebar', handleToggle)
+  }, [])
+
+  useEffect(() => {
     if (!mobileNavOpen) return
 
     const previousOverflow = document.body.style.overflow
@@ -30,36 +36,22 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   }, [mobileNavOpen])
 
   return (
-    <div className="h-screen bg-background overflow-hidden relative">
-      <div className="mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-4 lg:py-6 overflow-hidden relative">
-        <div className="mb-3 flex items-center justify-between lg:hidden shrink-0">
-          <button
-            onClick={() => setMobileNavOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground"
-            aria-label="Open chat sidebar"
-            aria-expanded={mobileNavOpen}
-            aria-controls="mobile-chat-sidebar"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-          <Link
-            href="/chat"
-            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-          >
-            New Chat
-          </Link>
+    <div className="h-screen w-full bg-background overflow-hidden flex relative">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex w-[260px] h-full flex-col shrink-0 border-r border-border bg-muted/20 overflow-hidden">
+        <ChatSidebar className="bg-transparent" />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 min-w-0 h-full relative overflow-hidden">
+        <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden bg-background">
+          {children}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] lg:gap-6 overflow-hidden">
-          <div className="hidden min-h-0 h-full flex-col lg:flex overflow-hidden">
-            <ChatSidebar />
-          </div>
-          <div className="min-h-0 h-full flex flex-col overflow-hidden">{children}</div>
-        </div>
-
+        {/* Mobile Sidebar Overlay */}
         <div
           className={cn(
-            'fixed inset-0 z-50 transition-all duration-200 lg:hidden',
+            'fixed inset-0 z-[100] transition-all duration-300 lg:hidden',
             mobileNavOpen ? 'pointer-events-auto' : 'pointer-events-none'
           )}
           role="dialog"

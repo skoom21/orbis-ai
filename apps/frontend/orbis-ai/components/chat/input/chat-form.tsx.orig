@@ -10,11 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 interface ChatFormProps {
   onSend: (message: string) => void;
@@ -36,7 +31,6 @@ interface ChatFormProps {
     enabled?: boolean;
     autoSendDefault?: boolean;
   };
-  variant?: 'floating' | 'docked';
 }
 
 interface CommandOption {
@@ -115,7 +109,6 @@ export function ChatForm({
   commandCapabilities = { slash: true, mentions: true, plus: true },
   attachmentCapabilities,
   voiceCapabilities,
-  variant = 'docked',
 }: ChatFormProps) {
   const { draft, setDraft, attachments, setAttachments } = useChatFormContext();
   const { settings, setSetting } = useChatSettingsContext()
@@ -151,11 +144,10 @@ export function ChatForm({
     )
   }, [])
 
-  const [placeholder, setPlaceholder] = useState(PLACEHOLDERS[0]);
-
-  useEffect(() => {
+  const placeholder = useMemo(() => {
+    // Return a random placeholder on component mount
     const randomIndex = Math.floor(Math.random() * PLACEHOLDERS.length);
-    setPlaceholder(PLACEHOLDERS[randomIndex]);
+    return PLACEHOLDERS[randomIndex];
   }, []);
 
   const hasSendableAttachment = attachments.some((attachment) => attachment.status !== 'failed')
@@ -486,57 +478,44 @@ export function ChatForm({
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const containerClasses = variant === 'floating' 
-    ? "w-full focus-within:z-10 relative pointer-events-none" 
-    : "w-full bg-gradient-to-t from-background via-background pt-4 pb-6 z-10 relative pointer-events-none";
-    
-  const innerClasses = variant === 'floating'
-    ? "w-full pointer-events-auto"
-    : "mx-auto w-full max-w-3xl px-4 lg:px-8 pointer-events-auto";
-
-  const formClasses = variant === 'floating'
-    ? 'relative flex w-full flex-col rounded-[26px] border border-border/60 bg-background p-2.5 shadow-2xl transition-colors focus-within:border-border focus-within:ring-1 focus-within:ring-border/50'
-    : 'relative flex w-full flex-col rounded-[26px] border border-border/60 bg-card p-2.5 shadow-sm transition-colors focus-within:bg-background focus-within:border-border focus-within:ring-1 focus-within:ring-border/50';
-
   return (
-    <div className={containerClasses}>
-      <div className={innerClasses}>
-        <div className="sr-only" aria-live="polite">{attachmentLiveSummary}</div>
-        <div className="sr-only" aria-live="polite">{isListening ? 'Voice input started.' : 'Voice input stopped.'}</div>
-        <form
-          onSubmit={handleSubmit}
-          onDragOver={(e) => {
-            e.preventDefault();
-            if (!isLoading && attachmentConfig.enabled) setIsDragActive(true);
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            const related = e.relatedTarget as Node | null;
-            if (!related || !e.currentTarget.contains(related)) {
-              setIsDragActive(false);
-            }
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
+    <div className="mx-auto w-full max-w-4xl bg-background p-4">
+      <div className="sr-only" aria-live="polite">{attachmentLiveSummary}</div>
+      <div className="sr-only" aria-live="polite">{isListening ? 'Voice input started.' : 'Voice input stopped.'}</div>
+      <form
+        onSubmit={handleSubmit}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!isLoading && attachmentConfig.enabled) setIsDragActive(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          const related = e.relatedTarget as Node | null;
+          if (!related || !e.currentTarget.contains(related)) {
             setIsDragActive(false);
-            if (isLoading || !attachmentConfig.enabled) return;
-            const files = Array.from(e.dataTransfer.files || []);
-            addAttachments(files);
-          }}
-          className={cn(
-            formClasses,
-            isDragActive ? 'border-primary ring-2 ring-primary/40 opacity-70' : 'hover:border-primary/30 opacity-100'
-          )}
-          aria-label="Chat composer"
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            multiple
-            accept={attachmentConfig.acceptedTypes.join(',')}
-            onChange={handleFileInputChange}
-          />
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragActive(false);
+          if (isLoading || !attachmentConfig.enabled) return;
+          const files = Array.from(e.dataTransfer.files || []);
+          addAttachments(files);
+        }}
+        className={cn(
+          'relative flex w-full flex-col rounded-2xl border border-border bg-background/60 p-3 shadow-lg backdrop-blur-xl transition-all focus-within:ring-2 focus-within:ring-primary/20',
+          isDragActive ? 'border-primary ring-2 ring-primary/40' : 'hover:border-primary/30'
+        )}
+        aria-label="Chat composer"
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          multiple
+          accept={attachmentConfig.acceptedTypes.join(',')}
+          onChange={handleFileInputChange}
+        />
 
         {attachments.length > 0 && (
           <div className="mb-2 flex flex-wrap items-center gap-2" role="list" aria-label="Selected attachments">
@@ -549,9 +528,9 @@ export function ChatForm({
                 {attachment.status === 'uploading' ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                 ) : attachment.status === 'failed' ? (
-                  <AlertCircle className="h-3.5 w-3.5 text-destructive" strokeWidth={1.5} />
+                  <AlertCircle className="h-3.5 w-3.5 text-destructive" />
                 ) : (
-                  <FileText className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
                 <span className="max-w-28 truncate text-foreground">{attachment.name}</span>
                 <span className="text-muted-foreground">
@@ -564,7 +543,7 @@ export function ChatForm({
                   onClick={() => removeAttachment(attachment.id)}
                   aria-label={attachment.status === 'uploading' ? `Cancel ${attachment.name}` : `Remove ${attachment.name}`}
                 >
-                  <X className="h-3 w-3" strokeWidth={1.5} />
+                  <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
@@ -593,21 +572,21 @@ export function ChatForm({
           </div>
         )}
 
-          <textarea
-            ref={textareaRef}
-            value={draft}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="w-full resize-none  px-2 py-1.5 text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
-            rows={1}
-            disabled={isLoading}
-            aria-label="Message input"
-            aria-describedby={helperTextId}
-            aria-controls={commandOpen ? commandListboxId : undefined}
-            aria-expanded={commandOpen}
-            aria-autocomplete="list"
-          />
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="w-full resize-none bg-transparent px-2 py-3 min-h-[48px] max-h-[300px] focus:outline-none text-base text-foreground placeholder:text-muted-foreground/60 transition-all font-medium"
+          rows={1}
+          disabled={isLoading}
+          aria-label="Message input"
+          aria-describedby={helperTextId}
+          aria-controls={commandOpen ? commandListboxId : undefined}
+          aria-expanded={commandOpen}
+          aria-autocomplete="list"
+        />
         <span id={helperTextId} className="sr-only">
           {settings.enterToSend ? 'Press Enter to send and Shift Enter for a new line.' : 'Press Shift Enter to send and Enter for a new line.'}
         </span>
@@ -648,86 +627,54 @@ export function ChatForm({
           </div>
         )}
 
-        {isListening && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-3xl border border-primary/20">
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center gap-1.5 h-8">
-                {[...Array(5)].map((_, i) => (
-                  <div 
-                    key={i} 
-                    className="w-1.5 bg-primary/80 rounded-full animate-pulse"
-                    style={{ 
-                      height: `${Math.max(20, Math.random() * 100)}%`,
-                      animationDelay: `${i * 0.15}s`,
-                      animationDuration: '0.8s'
-                    }}
-                  />
-                ))}
-              </div>
-              <p className="text-sm font-medium text-primary animate-pulse">Listening...</p>
-            </div>
-            <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2" onClick={toggleListening}>
-              <X className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-              <span className="sr-only">Cancel listening</span>
-            </Button>
-          </div>
-        )}
-
         {showControls && (
-          <div id={controlsId} className="flex justify-between items-end mt-1 px-1">
-            <div className="flex items-center gap-1">
+          <div id={controlsId} className="flex justify-between items-center mt-2 px-1 pb-1">
+            <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 rounded-full text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground"
+                    className="h-10 w-10 min-w-10 min-h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80"
                     aria-label="Attach file"
                     disabled={isLoading || !attachmentConfig.enabled}
                   >
-                    <Paperclip className="h-4 w-4" strokeWidth={2} />
+                    <Paperclip className="h-5 w-5" />
                     <span className="sr-only">Attach file</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                    <FolderUp className="h-4 w-4" strokeWidth={1.5} />
+                    <FolderUp className="h-4 w-4" />
                     Upload files
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setAttachmentError('Paste attachments from clipboard is coming soon.')}
                   >
-                    <ClipboardPaste className="h-4 w-4" strokeWidth={1.5} />
+                    <ClipboardPaste className="h-4 w-4" />
                     Paste from clipboard
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant={isListening ? 'destructive' : 'ghost'}
-                    className="relative h-8 w-8 rounded-full text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground"
-                    aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-                    disabled={isLoading || !isVoiceEnabled || !speechRecognitionSupported}
-                    onClick={toggleListening}
-                  >
-                    {isListening ? <MicOff className="h-4 w-4" strokeWidth={2} /> : <Mic className="h-4 w-4" strokeWidth={2} />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={12}>
-                  <p>Try voice mode</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                type="button"
+                size="icon"
+                variant={isListening ? 'destructive' : 'ghost'}
+                className="h-10 w-10 min-w-10 min-h-10 rounded-full transition-colors hover:text-foreground hover:bg-muted/80"
+                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                disabled={isLoading || !isVoiceEnabled || !speechRecognitionSupported}
+                onClick={toggleListening}
+              >
+                {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              </Button>
 
               <Button
                 type="button"
                 variant={voiceAutoSend ? 'outline' : 'ghost'}
                 size="sm"
-                className="hidden h-7 rounded-full bg-background/50 px-3 text-[11px] font-medium md:inline-flex"
+                className="hidden h-9 px-3 min-h-9 rounded-full text-[12px] md:inline-flex bg-background/50"
                 disabled={!isVoiceEnabled || !speechRecognitionSupported}
                 onClick={() => {
                   setVoiceAutoSend((current) => {
@@ -741,8 +688,8 @@ export function ChatForm({
               </Button>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="hidden text-[11px] font-medium text-muted-foreground/60 md:inline">
+            <div className="flex items-center gap-4">
+              <span className="hidden text-[11px] text-muted-foreground/80 md:inline font-medium">
                 {settings.enterToSend ? 'Enter to send • Shift+Enter for newline' : 'Shift+Enter to send • Enter for newline'}
               </span>
 
@@ -751,10 +698,10 @@ export function ChatForm({
                   type="button"
                   onClick={onStop}
                   size="icon"
-                  className="h-8 w-8 rounded-full bg-destructive text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90"
+                  className="h-10 w-10 min-w-10 min-h-10 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all shadow-sm"
                   aria-label="Stop generating"
                 >
-                  <Square className="h-3.5 w-3.5 fill-current" strokeWidth={2} />
+                  <Square className="h-4 w-4" />
                   <span className="sr-only">Stop generating</span>
                 </Button>
               ) : (
@@ -763,22 +710,21 @@ export function ChatForm({
                   size="icon"
                   disabled={!canSend}
                   className={cn(
-                    "h-8 w-8 rounded-full transition-all duration-200",
+                    "h-10 w-10 min-w-10 min-h-10 rounded-full transition-all duration-200",
                     canSend 
-                      ? "bg-primary text-primary-foreground shadow flex items-center justify-center hover:bg-primary/90" 
-                      : "bg-muted-foreground/20 text-muted-foreground/60"
+                      ? "bg-primary text-primary-foreground shadow-md hover:scale-105 hover:bg-primary/90" 
+                      : "bg-muted/80 text-muted-foreground/50 opacity-50"
                   )}
                   aria-label="Send message"
                 >
-                  <Send className="h-3.5 w-3.5" strokeWidth={2.5} style={{ marginLeft: 2 }} />
+                  <Send className="h-4 w-4" />
                   <span className="sr-only">Send message</span>
                 </Button>
               )}
             </div>
           </div>
         )}
-        </form>
-      </div>
+      </form>
     </div>
   );
 }

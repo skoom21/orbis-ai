@@ -41,33 +41,33 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
   const queryClient = useQueryClient()
   
   const [isStreaming, setIsStreaming] = useState(false)
-  const [rawStreamingMessage, setRawStreamingMessage] = useState('')
   const [streamingMessage, setStreamingMessage] = useState('')
+  const rawStreamingMessageRef = useRef('')
+  const streamingMessageRef = useRef('')
   const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     if (!isStreaming) {
       setStreamingMessage('')
-      setRawStreamingMessage('')
+      rawStreamingMessageRef.current = ''
+      streamingMessageRef.current = ''
       return
     }
     
-    if (streamingMessage === rawStreamingMessage) return
-
     const interval = setInterval(() => {
       setStreamingMessage((prev) => {
-        if (prev.length >= rawStreamingMessage.length) {
-          clearInterval(interval)
-          return prev
-        }
-        const diff = rawStreamingMessage.length - prev.length
+        const raw = rawStreamingMessageRef.current
+        if (prev.length >= raw.length) return prev
+        const diff = raw.length - prev.length
         const chunkSize = Math.max(1, Math.min(4, Math.ceil(diff / 5)))
-        return rawStreamingMessage.slice(0, prev.length + chunkSize)
+        const next = raw.slice(0, prev.length + chunkSize)
+        streamingMessageRef.current = next
+        return next
       })
     }, 15)
 
     return () => clearInterval(interval)
-  }, [rawStreamingMessage, isStreaming, streamingMessage])
+  }, [isStreaming])
 
   const parseSSE = useCallback((rawText: string): ParsedSSEEvent[] => {
     const blocks = rawText.split(/\n\n+/)
@@ -114,7 +114,9 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
       abortControllerRef.current = null
     }
     setIsStreaming(false)
-    setRawStreamingMessage('')
+    rawStreamingMessageRef.current = ''
+    streamingMessageRef.current = ''
+    setStreamingMessage('')
   }, [])
 
   const sendMessage = useCallback(
@@ -130,7 +132,9 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
       }
 
       setIsStreaming(true)
-      setRawStreamingMessage('')
+      setStreamingMessage('')
+      rawStreamingMessageRef.current = ''
+      streamingMessageRef.current = ''
 
       // Create abort controller
       abortControllerRef.current = new AbortController()
@@ -199,14 +203,19 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
               const delta = parsedEvent.data?.content || parsedEvent.data?.message || ''
               if (!delta) continue
               
-              setRawStreamingMessage((prev) => {
-                // If it's already accumulating this exactly, don't double append
-                if (prev && prev.endsWith(delta) && delta.length > 20) return prev;
-                // If the delta IS the full string so far (cumulative mode)
-                if (delta.startsWith(prev)) return delta;
-                // Otherwise append
-                return prev + delta;
-              })
+              const prev = rawStreamingMessageRef.current;
+              // If it's already accumulating this exactly, don't double append
+              if (prev && prev.endsWith(delta) && delta.length > 20) {
+                 // do nothing
+              }
+              // If the delta IS the full string so far (cumulative mode)
+              else if (delta.startsWith(prev)) {
+                  rawStreamingMessageRef.current = delta;
+              }
+              // Otherwise append
+              else {
+                  rawStreamingMessageRef.current = prev + delta;
+              }
               continue
             }
 
@@ -230,6 +239,11 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
           }
         }
 
+        // Wait for typewriter effect to complete before we fetch final message chunk from DB
+        while (rawStreamingMessageRef.current.length > streamingMessageRef.current.length) {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+        }
+
         // After stream completes, refetch messages to get final persisted messages with IDs
         await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
 
@@ -250,7 +264,9 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
         )
       } finally {
         setIsStreaming(false)
-        setRawStreamingMessage('')
+        setStreamingMessage('')
+        rawStreamingMessageRef.current = ''
+        streamingMessageRef.current = ''
         abortControllerRef.current = null
       }
     },

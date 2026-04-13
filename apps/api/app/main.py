@@ -6,7 +6,8 @@ import time
 import os
 
 from app.config import settings
-from app.routers import health, conversations, chat_stream
+from app.routers import health, conversations, chat_stream, users, trips, bookings, notifications, analytics, observability
+from app.routers.payments import router as payments_router, webhook_router as stripe_webhook_router
 from app.api.v1 import router as api_v1_router
 # Import our enhanced logging system
 from app.logging_config import get_logger, log_request_response
@@ -53,6 +54,14 @@ if os.path.exists("static"):
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat"])
 app.include_router(conversations.router, prefix="/api/v1", tags=["conversations"])
+app.include_router(users.router, prefix="/api/v1", tags=["users"])
+app.include_router(trips.router, prefix="/api/v1", tags=["trips"])
+app.include_router(bookings.router, prefix="/api/v1", tags=["bookings"])
+app.include_router(payments_router, prefix="/api/v1", tags=["payments"])
+app.include_router(stripe_webhook_router, prefix="/api/v1", tags=["webhooks"])
+app.include_router(notifications.router, prefix="/api/v1", tags=["notifications"])
+app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+app.include_router(observability.router, prefix="/api/v1", tags=["observability"])
 app.include_router(api_v1_router.router, prefix="/api", tags=["auth"])
 
 @app.get("/", response_class=HTMLResponse)

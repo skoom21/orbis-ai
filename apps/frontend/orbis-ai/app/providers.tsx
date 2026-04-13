@@ -7,7 +7,9 @@ export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000, // 1 minute
+        staleTime: 30 * 1000, // 30 seconds
+        refetchOnWindowFocus: true,
+        refetchOnMount: true,
       },
     },
   }));
