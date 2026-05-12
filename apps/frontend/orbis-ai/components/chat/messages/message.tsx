@@ -26,6 +26,7 @@ interface MessageProps {
   content: string;
   createdAt?: string;
   isStreaming?: boolean;
+  footer?: React.ReactNode;
   onRegenerate?: () => void;
   onEditResubmit?: (messageId: string, content: string) => void;
   onContinue?: (messageId: string, content: string) => void;
@@ -52,6 +53,7 @@ function MessageComponent({
   content,
   createdAt,
   isStreaming,
+  footer,
   onRegenerate,
   onEditResubmit,
   onContinue,
@@ -124,10 +126,13 @@ function MessageComponent({
   }, [])
 
   return (
-    <div 
+    <div
       className={cn(
-        "group flex w-full p-4 sm:p-5 rounded-2xl md:rounded-3xl hover:bg-muted/50 transition-colors", 
-        isUser ? "justify-end" : "justify-start"
+        "group flex w-full p-4 sm:p-5 rounded-2xl md:rounded-3xl transition-colors",
+        isUser ? "justify-end" : "justify-start",
+        footer && !isUser
+          ? "bg-muted/30 border border-border/40 hover:bg-muted/40"
+          : "hover:bg-muted/50"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -194,7 +199,13 @@ function MessageComponent({
             <span className="inline-block ml-1 animate-pulse">▊</span>
           )}
         </div>
-        
+
+        {footer && !isUser && (
+          <div className="w-full mt-3 pt-3 border-t border-border/25">
+            {footer}
+          </div>
+        )}
+
         <div className={cn(
           "flex items-center gap-2 text-xs text-muted-foreground opacity-0 transition-opacity group-focus-within:opacity-100",
           isHovered && "opacity-100"

@@ -35,10 +35,9 @@ async def get_user_preferences(user_id: str) -> str:
     try:
         if not db_service.supabase:
             return json.dumps({"error": "Database not available"})
-        result = db_service.supabase.table("user_preferences").select("*").eq("user_id", user_id).single().execute()
+        result = db_service.supabase.table("user_preferences").select("*").eq("user_id", user_id).maybe_single().execute()
         if result.data:
-            prefs = result.data
-            # Remove raw embedding from LLM output
+            prefs = dict(result.data)
             prefs.pop("preference_embedding", None)
             return json.dumps({"preferences": prefs})
         return json.dumps({"preferences": None, "note": "No preferences set for this user"})
@@ -129,7 +128,7 @@ async def search_attractions(city: str, category: str = "") -> str:
         if not db_service.supabase:
             return json.dumps({"error": "Database not available"})
         query = db_service.supabase.table("attractions") \
-            .select("name, description, category, rating, address, ticket_price, opening_hours") \
+            .select("name, description, category, rating, address, opening_hours") \
             .ilike("city_name", f"%{city}%")
         if category:
             query = query.eq("category", category)

@@ -467,6 +467,19 @@ class ApiClient {
     return `/chat/${conversationId}`
   }
 
+  // ---------- User Preferences ----------
+
+  async getPreferences(): Promise<{ preferences: Record<string, unknown> | null }> {
+    return this.authenticatedRequest('/api/v1/users/me/preferences', { method: 'GET' })
+  }
+
+  async updatePreferences(prefs: Record<string, unknown>): Promise<{ preferences: Record<string, unknown> }> {
+    return this.authenticatedRequest('/api/v1/users/me/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(prefs),
+    })
+  }
+
   // ---------- Health Check ----------
 
   async healthCheck(): Promise<{ status: string }> {

@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Link2, Wrench, FileText } from 'lucide-react'
+import { Link2, Wrench, FileText, CalendarDays, PanelRight } from 'lucide-react'
 import type {
   MessageContentPart,
   MessageSourceItem,
@@ -340,7 +340,31 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                 table: ({node, ...props}) => <div className="overflow-x-auto mb-4 w-full rounded-lg border border-border/80"><table className="w-full text-left border-collapse text-[14px]" {...props} /></div>,
                 th: ({node, ...props}) => <th className="border-b border-border/80 p-3 font-semibold bg-muted/30 text-foreground" {...props} />,
                 td: ({node, ...props}) => <td className="border-b border-border/40 p-3 align-top" {...props} />,
-                p: ({node, ...props}) => <p className="mb-4 text-[15px] leading-relaxed" {...props} />,
+                p: ({node, children, ...props}) => {
+                  const text = typeof children === 'string' ? children : Array.isArray(children) ? children.map(c => typeof c === 'string' ? c : '').join('') : ''
+                  // Strip raw trip ID lines; show a workspace button instead
+                  const isTripSaved = /trip id is|trip.*created.*system|I['']ve created your trip/i.test(text)
+                  const hasTripId = /`[0-9a-f-]{36}`/.test(text)
+                  if (isTripSaved || hasTripId) {
+                    return (
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 text-[12px] text-emerald-400 font-medium">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          Trip saved to your workspace
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => window.dispatchEvent(new CustomEvent('orbis:open-workspace'))}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          <PanelRight className="h-3 w-3" />
+                          View in Workspace
+                        </button>
+                      </div>
+                    )
+                  }
+                  return <p className="mb-4 text-[15px] leading-relaxed" {...props}>{children}</p>
+                },
                 h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 mt-6 text-foreground" {...props} />,
                 h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-5 text-foreground" {...props} />,
                 h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-3 mt-4 text-foreground" {...props} />,
@@ -358,16 +382,31 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                          .replace(/:\s*True/g, ': true')
                          .replace(/:\s*False/g, ': false');
                        const parsed = JSON.parse(cleanData);
+
+                       // Itinerary data — consumed by the workspace panel, not rendered in chat
+                       if (parsed && typeof parsed === 'object' && parsed.type === 'itinerary') {
+                         return (
+                           <div className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/30 rounded-full px-3 py-1 border border-border/40 my-1">
+                             <CalendarDays className="h-3 w-3 text-primary/60" />
+                             Itinerary saved — open Trip Workspace to view
+                           </div>
+                         )
+                       }
+
                        // First check if it's an array of single items mapped to <HotelCard>
                        // If the AI accidentally returned [{...hotel...}] instead of {"hotels": []}
                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
-                           return <div className="space-y-4">{parsed.map((p, i) => <HotelCard key={i} data={JSON.stringify(p)} />)}</div>
+                           return <div className="space-y-4">{parsed.map((p: unknown, i: number) => <HotelCard key={i} data={JSON.stringify(p)} />)}</div>
                        }
                        const structured = parseStructuredPayload(parsed);
                        if (structured.length > 0) {
                          const s = structured[0];
                          if (s.type === 'hotel-results') return <HotelResultsCarousel title={s.title} subtitle={s.subtitle} items={s.items} />
                          if (s.type === 'booking-update') return <BookingStatusCards title={s.title} items={s.items} />
+                         if (s.type === 'flight-results') {
+                           const rawFlights = Array.isArray((s as {data?: unknown}).data) ? (s as {data: unknown[]}).data : []
+                           return <div className="my-4 space-y-4">{rawFlights.map((f, i) => <FlightCard key={i} data={JSON.stringify(f)} />)}</div>
+                         }
                        }
                      } catch {}
                    }

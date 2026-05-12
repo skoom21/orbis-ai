@@ -101,18 +101,49 @@ async def stream_chat(
             ):
                 event_type = event.get("type")
                 
-                if event_type == "agent_start":
-                    # Agent started processing
+                if event_type == "step":
+                    # Orchestration milestone: intent_analysis, routing, fallback…
+                    yield {
+                        "event": "step",
+                        "data": json.dumps({
+                            "step":   event.get("step"),
+                            "label":  event.get("label"),
+                            "status": event.get("status"),
+                        }),
+                    }
+
+                elif event_type == "agent_start":
                     agent_type = event.get("agent_type")
                     logger.info(f"Agent started: {agent_type}", agent_type=agent_type, conversation_id=conversation_id)
                     yield {
                         "event": "agent",
                         "data": json.dumps({
                             "agent_type": agent_type,
-                            "conversation_id": conversation_id
-                        })
+                            "label": event.get("label", agent_type),
+                            "conversation_id": conversation_id,
+                        }),
                     }
-                
+
+                elif event_type == "tool_start":
+                    yield {
+                        "event": "tool_start",
+                        "data": json.dumps({
+                            "tool":  event.get("tool"),
+                            "label": event.get("label"),
+                            "input": event.get("input"),
+                        }),
+                    }
+
+                elif event_type == "tool_end":
+                    yield {
+                        "event": "tool_end",
+                        "data": json.dumps({
+                            "tool":           event.get("tool"),
+                            "status":         event.get("status", "success"),
+                            "output_preview": event.get("output_preview"),
+                        }),
+                    }
+
                 elif event_type == "content":
                     content = event.get("content", "")
                     full_response += content
@@ -128,16 +159,20 @@ async def stream_chat(
                         "event": "token",
                         "data": json.dumps({
                             "content": content,
-                            "conversation_id": conversation_id
-                        })
+                            "conversation_id": conversation_id,
+                        }),
                     }
-                
+
+                elif event_type == "suggestions":
+                    yield {
+                        "event": "suggestions",
+                        "data": json.dumps({"suggestions": event.get("suggestions", [])}),
+                    }
+
                 elif event_type == "agent_end":
-                    # Agent finished processing
-                    pass
-                
+                    pass  # no SSE needed; frontend infers from tool_end / token arrival
+
                 elif event_type == "done":
-                    # All processing complete
                     break
             
             # Save assistant message with agent metadata

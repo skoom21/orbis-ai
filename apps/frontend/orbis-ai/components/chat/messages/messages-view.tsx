@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Loader2 } from 'lucide-react';
 import { Message } from './message';
+import { AgentTrace } from './agent-trace';
+import { ActionChips } from './action-chips';
+import { InlineTravelForm, detectInlineFormType, type InlineFormType } from './inline-travel-form';
 import {
   buildMessageTree,
   getSelectedBranchIds,
@@ -8,16 +11,21 @@ import {
 } from './message-tree';
 import type { ChatMessage } from '../types';
 import { useChatSettingsContext } from '../providers';
+import type { AgentTraceStep } from '@/hooks/use-chat-stream';
 
 interface MessagesViewProps {
   messages: ChatMessage[];
   isStreaming?: boolean;
   streamingMessage?: string;
+  agentTrace?: AgentTraceStep[];
+  currentAgent?: string | null;
+  suggestions?: string[];
   onRegenerate?: () => void;
   onEditResubmit?: (messageId: string, content: string) => void;
   onContinue?: (messageId: string, content: string) => void;
   onFork?: (messageId: string, content: string) => void;
   onFeedback?: (messageId: string, feedback: 'up' | 'down') => void;
+  onSendMessage?: (message: string) => void;
   emptyState?: React.ReactNode;
 }
 
@@ -25,11 +33,14 @@ export function MessagesView({
   messages,
   isStreaming = false,
   streamingMessage,
+  agentTrace = [],
+  suggestions = [],
   onRegenerate,
   onEditResubmit,
   onContinue,
   onFork,
   onFeedback,
+  onSendMessage,
   emptyState,
 }: MessagesViewProps) {
   const { settings, setSetting } = useChatSettingsContext()
@@ -41,6 +52,7 @@ export function MessagesView({
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(settings.autoScroll)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [selectedSiblingByParent, setSelectedSiblingByParent] = useState<Record<string, number>>({})
+  const [dismissedFormKey, setDismissedFormKey] = useState<string | null>(null)
 
   const tree = useMemo(() => buildMessageTree(messages || []), [messages])
 
@@ -199,6 +211,9 @@ export function MessagesView({
               }
             }
 
+            const isLastMessage = index === visibleMessages.length - 1
+            const showChips = isLastMessage && msg.role === 'assistant' && !isStreaming && suggestions.length > 0
+
             return (
               <React.Fragment key={msg.id}>
                 {showDateHeader && (
@@ -206,33 +221,79 @@ export function MessagesView({
                     {dateLabel}
                   </div>
                 )}
-                <Message 
- 
-                key={msg.id} 
-                id={msg.id}
-                role={msg.role} 
-                content={msg.content} 
-                createdAt={msg.created_at}
-                onRegenerate={onRegenerate}
-                onEditResubmit={onEditResubmit}
-                onContinue={onContinue}
-                onFork={onFork}
-                onFeedback={onFeedback}
-                siblingIndex={siblingMeta.siblingIndex}
-                siblingCount={siblingMeta.siblingCount}
-                onPrevSibling={() => cycleSibling(msg.id, -1)}
-                onNextSibling={() => cycleSibling(msg.id, 1)}
-              />
+                {(() => {
+                  const inlineFormType: InlineFormType =
+                    isLastMessage && !isStreaming && onSendMessage && dismissedFormKey !== msg.id
+                      ? detectInlineFormType(msg.content)
+                      : null
+
+                  const inlineForm = inlineFormType ? (
+                    <InlineTravelForm
+                      type={inlineFormType}
+                      onSubmit={(m) => { setDismissedFormKey(msg.id); onSendMessage!(m) }}
+                      className={inlineFormType === 'trip-planner' ? 'max-w-lg' : 'max-w-xs'}
+                    />
+                  ) : null
+
+                  return (
+                    <Message
+                      key={msg.id}
+                      id={msg.id}
+                      role={msg.role}
+                      content={msg.content}
+                      createdAt={msg.created_at}
+                      footer={inlineForm}
+                      onRegenerate={onRegenerate}
+                      onEditResubmit={onEditResubmit}
+                      onContinue={onContinue}
+                      onFork={onFork}
+                      onFeedback={onFeedback}
+                      siblingIndex={siblingMeta.siblingIndex}
+                      siblingCount={siblingMeta.siblingCount}
+                      onPrevSibling={() => cycleSibling(msg.id, -1)}
+                      onNextSibling={() => cycleSibling(msg.id, 1)}
+                    />
+                  )
+                })()}
+                {showChips && onSendMessage && (
+                  <ActionChips chips={suggestions} onSelect={onSendMessage} />
+                )}
               </React.Fragment>
             )
           })}
           {isStreaming && (
-            <Message 
-              role="assistant" 
-              content={streamingMessage || ''} 
-              createdAt={new Date().toISOString()}
-              isStreaming
-            />
+            <div className="flex flex-col gap-2">
+              {/* Live agent-activity trace — collapses once text starts flowing */}
+              {agentTrace.length > 0 && (
+                <AgentTrace
+                  steps={agentTrace}
+                  isStreaming={isStreaming}
+                  hasContent={!!streamingMessage}
+                />
+              )}
+
+              {/* Thinking placeholder: only shown before the first trace step
+                  or token arrives — avoids double-loader with Message's own
+                  three-dot animation */}
+              {!streamingMessage && agentTrace.length === 0 && (
+                <div className="flex items-center gap-2 px-1 py-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  <span className="animate-pulse">Thinking…</span>
+                </div>
+              )}
+
+              {/* Only render the message bubble once there is actual text —
+                  this prevents Message's own empty-content three-dot loader
+                  from appearing alongside the trace/thinking states above */}
+              {streamingMessage && (
+                <Message
+                  role="assistant"
+                  content={streamingMessage}
+                  createdAt={new Date().toISOString()}
+                  isStreaming
+                />
+              )}
+            </div>
           )}
           <div className="sr-only" aria-live="polite">
             {streamingMessage ? 'Assistant is generating a response.' : 'Assistant response complete.'}

@@ -325,31 +325,41 @@
   .tools-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
   }
   .tool-chip {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    gap: 5px;
-    border: 1.5px solid #1a5276;
-    border-radius: 4px;
-    padding: 3px 10px;
-    font-size: 9px;
-    font-weight: 700;
-    color: #1a5276;
-    background: #eaf3fb;
-    letter-spacing: 0.2px;
+    justify-content: center;
+    gap: 4px;
+    border: 1.5px solid #d0dce8;
+    border-radius: 6px;
+    padding: 7px 8px 5px;
+    background: #f4f7fa;
+    min-width: 48px;
   }
   .tool-chip img {
-    width: 13px;
-    height: 13px;
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
+    display: block;
+  }
+  .tool-chip span {
+    font-size: 7px;
+    font-weight: 600;
+    color: #1a5276;
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.1px;
   }
   .tool-chip.orange {
-    border-color: #e8522a;
-    color: #e8522a;
+    border-color: #f5cfc3;
     background: #fff5f2;
+  }
+  .tool-chip.orange span {
+    color: #e8522a;
   }
 
   /* ── PERF STATS ── */
@@ -647,19 +657,18 @@
       <div>
         <div class="sec-head">Tools &amp; Technologies</div>
         <div class="tools-row">
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/nextdotjs/1a5276" alt="">Next.js 15</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/fastapi/1a5276" alt="">FastAPI</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/langchain/1a5276" alt="">LangGraph</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/langchain/1a5276" alt="">LangChain</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/supabase/1a5276" alt="">Supabase</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/postgresql/1a5276" alt="">pgvector</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/redis/1a5276" alt="">Redis</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/typescript/1a5276" alt="">TypeScript</span>
-          <span class="tool-chip"><img src="https://cdn.simpleicons.org/python/1a5276" alt="">Python</span>
-          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/googlegemini/e8522a" alt="">Gemini 2.5 Flash</span>
-          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/google/e8522a" alt="">SerpApi</span>
-          <!-- <span class="tool-chip orange">liteAPI v3.0</span> -->
-          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/stripe/e8522a" alt="">Stripe</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/nextdotjs/1a5276" alt="Next.js"><span>Next.js</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/fastapi/1a5276" alt="FastAPI"><span>FastAPI</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/langchain/1a5276" alt="LangGraph"><span>LangGraph</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/supabase/1a5276" alt="Supabase"><span>Supabase</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/postgresql/1a5276" alt="pgvector"><span>pgvector</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/redis/1a5276" alt="Redis"><span>Redis</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/docker/1a5276" alt="Docker"><span>Docker</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/typescript/1a5276" alt="TypeScript"><span>TypeScript</span></span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/python/1a5276" alt="Python"><span>Python</span></span>
+          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/googlegemini/e8522a" alt="Gemini"><span>Gemini 2.5</span></span>
+          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/google/e8522a" alt="SerpApi"><span>SerpApi</span></span>
+          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/stripe/e8522a" alt="Stripe"><span>Stripe</span></span>
         </div>
       </div>
 

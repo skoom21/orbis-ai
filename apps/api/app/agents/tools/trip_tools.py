@@ -49,6 +49,14 @@ async def create_trip(
         except Exception:
             dest_list = [{"city": destinations}]
 
+        valid_trip_types = {"adventure", "cultural", "relaxation", "business", "family", "romantic", "solo"}
+        normalized_trip_type = "relaxation"
+        for part in (trip_type or "").replace(",", " ").split():
+            candidate = part.strip().lower()
+            if candidate in valid_trip_types:
+                normalized_trip_type = candidate
+                break
+
         result = db_service.supabase.table("trips").insert({
             "user_id": user_id,
             "title": title,
@@ -56,7 +64,7 @@ async def create_trip(
             "start_date": start_date,
             "end_date": end_date,
             "estimated_budget": estimated_budget,
-            "trip_type": trip_type,
+            "trip_type": normalized_trip_type,
             "number_of_travelers": number_of_travelers,
             "currency": currency,
             "status": "planning",

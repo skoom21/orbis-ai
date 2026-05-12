@@ -5,12 +5,36 @@
  * Character-reveal animation: incoming chunks are enqueued and revealed
  * gradually via requestAnimationFrame so the UI looks like live streaming
  * even when the model sends large, infrequent chunks.
+ *
+ * Agent trace: processes step / agent / tool_start / tool_end SSE events
+ * and builds an AgentTraceStep[] array that the UI renders as a live
+ * activity panel above the streaming message.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQueryClient, QueryClient } from '@tanstack/react-query'
 import { useAuth } from './use-auth'
 import { apiClient } from '@/lib/api-client'
+
+// ─── Agent trace types ──────────────────────────────────────────────────────
+
+export type AgentTraceStepStatus = 'running' | 'done' | 'warning' | 'error' | 'success'
+
+export interface AgentTraceStep {
+  id: string
+  type: 'step' | 'agent' | 'tool'
+  status: AgentTraceStepStatus
+  label: string
+  /** Only set for type === 'agent' */
+  agentType?: string
+  /** Only set for type === 'tool' */
+  tool?: string
+  /** Serialisable input dict passed to the tool */
+  input?: Record<string, unknown>
+  /** Short preview of the tool output */
+  outputPreview?: string
+  timestamp: number
+}
 
 const noopQueryClient = {
   getQueryData: () => undefined,
@@ -44,6 +68,15 @@ interface StreamMessage {
   conversation_id?: string
   message_id?: string
   detail?: string
+  // agent trace payloads
+  step?: string
+  label?: string
+  status?: string
+  agent_type?: string
+  tool?: string
+  input?: Record<string, unknown>
+  output_preview?: string
+  suggestions?: string[]
 }
 
 interface ParsedSSEEvent {
@@ -54,6 +87,11 @@ interface ParsedSSEEvent {
 interface UseChatStreamOptions {
   conversationId: string
   onError?: (error: Error) => void
+}
+
+let _traceIdCounter = 0
+function nextTraceId() {
+  return `trace-${++_traceIdCounter}`
 }
 
 // Characters revealed per animation frame (~60fps → ~720 chars/sec).
@@ -67,6 +105,13 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
 
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingMessage, setStreamingMessage] = useState('')
+  const [agentTrace, setAgentTrace] = useState<AgentTraceStep[]>([])
+  const [currentAgent, setCurrentAgent] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+
+  // Mutable ref so event handlers can find tool steps by tool name without
+  // triggering re-renders during high-frequency streaming.
+  const traceRef = useRef<AgentTraceStep[]>([])
 
   // Total text received from server (for cumulative-mode detection)
   const accumulatedRef = useRef('')
@@ -106,6 +151,20 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
     startRevealLoop()
   }, [startRevealLoop])
 
+  // ─── Trace helpers ─────────────────────────────────────────────────────────
+  // All mutations go through traceRef first, then batch-set state so React
+  // doesn't re-render on every token while the text reveal loop is running.
+
+  const pushTrace = useCallback((step: AgentTraceStep) => {
+    traceRef.current = [...traceRef.current, step]
+    setAgentTrace([...traceRef.current])
+  }, [])
+
+  const updateTrace = useCallback((id: string, patch: Partial<AgentTraceStep>) => {
+    traceRef.current = traceRef.current.map((s) => s.id === id ? { ...s, ...patch } : s)
+    setAgentTrace([...traceRef.current])
+  }, [])
+
   // Reset all animation state when streaming ends
   useEffect(() => {
     if (!isStreaming) {
@@ -117,6 +176,14 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
       displayedRef.current = ''
       accumulatedRef.current = ''
       setStreamingMessage('')
+      // Keep the trace visible briefly after streaming ends so the user
+      // can see the completed steps, then clear it.
+      const t = window.setTimeout(() => {
+        traceRef.current = []
+        setAgentTrace([])
+        setCurrentAgent(null)
+      }, 4000)
+      return () => window.clearTimeout(t)
     }
   }, [isStreaming])
 
@@ -181,6 +248,10 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
 
       setIsStreaming(true)
       setStreamingMessage('')
+      setCurrentAgent(null)
+      setSuggestions([])
+      traceRef.current = []
+      setAgentTrace([])
       pendingRef.current = ''
       displayedRef.current = ''
       accumulatedRef.current = ''
@@ -240,24 +311,81 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
           buffer = eventChunks.pop() || ''
 
           for (const parsedEvent of parseSSE(eventChunks.join('\n\n'))) {
-            const normalizedType = parsedEvent.data?.type || parsedEvent.event
+            // The SSE `event:` field takes precedence; fall back to the
+            // `type` field inside the JSON payload for older events.
+            const eventKind = parsedEvent.event !== 'message' ? parsedEvent.event : (parsedEvent.data?.type ?? 'message')
+            const d = parsedEvent.data
 
-            if (
-              normalizedType === 'created' ||
-              normalizedType === 'sync' ||
-              normalizedType === 'agent'
-            ) {
+            // ── Orchestration step pill ──────────────────────────────────
+            if (eventKind === 'step') {
+              const stepId = nextTraceId()
+              const status = (d?.status ?? 'done') as AgentTraceStepStatus
+              pushTrace({
+                id: stepId,
+                type: 'step',
+                status,
+                label: d?.label ?? d?.step ?? 'Processing',
+                timestamp: Date.now(),
+              })
               continue
             }
 
+            // ── Agent activated ──────────────────────────────────────────
+            if (eventKind === 'agent') {
+              const agentType = d?.agent_type ?? ''
+              setCurrentAgent(agentType)
+              pushTrace({
+                id: nextTraceId(),
+                type: 'agent',
+                status: 'running',
+                label: d?.label ?? agentType,
+                agentType,
+                timestamp: Date.now(),
+              })
+              continue
+            }
+
+            // ── Tool call started ────────────────────────────────────────
+            if (eventKind === 'tool_start') {
+              pushTrace({
+                id: `tool-${d?.tool ?? nextTraceId()}`,
+                type: 'tool',
+                status: 'running',
+                label: d?.label ?? d?.tool ?? 'Tool call',
+                tool: d?.tool,
+                input: d?.input,
+                timestamp: Date.now(),
+              })
+              continue
+            }
+
+            // ── Tool call finished ───────────────────────────────────────
+            if (eventKind === 'tool_end') {
+              const toolId = `tool-${d?.tool}`
+              const existing = traceRef.current.find((s) => s.id === toolId)
+              if (existing) {
+                updateTrace(toolId, {
+                  status: (d?.status ?? 'success') as AgentTraceStepStatus,
+                  outputPreview: d?.output_preview ?? undefined,
+                })
+              }
+              continue
+            }
+
+            // ── Silently skip non-content bookkeeping events ─────────────
+            if (eventKind === 'created' || eventKind === 'sync') {
+              continue
+            }
+
+            // ── Text token ───────────────────────────────────────────────
             if (
-              normalizedType === 'token' ||
-              normalizedType === 'type' ||
-              normalizedType === 'attachment' ||
-              normalizedType === 'message' ||
-              normalizedType === 'content'
+              eventKind === 'token' ||
+              eventKind === 'type' ||
+              eventKind === 'attachment' ||
+              eventKind === 'message' ||
+              eventKind === 'content'
             ) {
-              const delta = parsedEvent.data?.content || parsedEvent.data?.message || ''
+              const delta = d?.content || d?.message || ''
               if (!delta) continue
 
               // Detect cumulative vs incremental streaming mode
@@ -265,14 +393,11 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
               let deltaNew: string
 
               if (prev && prev.endsWith(delta) && delta.length > 20) {
-                // Duplicate chunk — skip
-                continue
+                continue // duplicate chunk
               } else if (delta.startsWith(prev) && delta.length > prev.length) {
-                // Cumulative mode: delta is the full text so far; extract new part
                 deltaNew = delta.slice(prev.length)
                 accumulatedRef.current = delta
               } else {
-                // Incremental mode: delta is just the new part
                 deltaNew = delta
                 accumulatedRef.current = prev + delta
               }
@@ -281,20 +406,27 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
               continue
             }
 
-            if (normalizedType === 'final' || normalizedType === 'done') {
+            if (eventKind === 'suggestions') {
+              const chips = d?.suggestions
+              console.debug('[ChatStream] suggestions received:', chips)
+              if (Array.isArray(chips) && chips.length > 0) setSuggestions(chips as string[])
+              continue
+            }
+
+            if (eventKind === 'final' || eventKind === 'done') {
               break outer
             }
 
-            if (normalizedType === 'cancel') {
+            if (eventKind === 'cancel') {
               stopStreaming()
               break outer
             }
 
-            if (normalizedType === 'error') {
+            if (eventKind === 'error') {
               throw new Error(
-                parsedEvent.data?.detail ||
-                  parsedEvent.data?.message ||
-                  (parsedEvent.data as { error?: string } | null)?.error ||
+                d?.detail ||
+                  d?.message ||
+                  (d as { error?: string } | null)?.error ||
                   'Stream error'
               )
             }
@@ -315,6 +447,17 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
             requestAnimationFrame(waitForDrain)
           })
         }
+
+        // Client-side fallback suggestions if the backend didn't send any
+        setSuggestions((current) => {
+          if (current.length > 0) return current
+          const text = accumulatedRef.current.toLowerCase()
+          if (/flight|fly|depart|airline/.test(text)) return ['Search hotels too', 'Try different dates', 'One-way instead', 'Different airline']
+          if (/hotel|stay|accommodation|check.?in/.test(text)) return ['Book this hotel', 'Search flights too', 'Show cheaper options', 'What\'s nearby?']
+          if (/itinerary|day 1|day 2|plan/.test(text)) return ['Search flights now', 'Find hotels', 'Adjust the plan', 'Save & export']
+          if (/book|reserv|confirm/.test(text)) return ['View my bookings', 'Add to trip', 'Share itinerary']
+          return ['Search flights', 'Find hotels', 'Plan a trip', 'View my trips']
+        })
 
         await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
       } catch (error) {
@@ -370,5 +513,8 @@ export function useChatStream({ conversationId, onError }: UseChatStreamOptions)
     stopStreaming,
     isStreaming,
     streamingMessage,
+    agentTrace,
+    currentAgent,
+    suggestions,
   }
 }

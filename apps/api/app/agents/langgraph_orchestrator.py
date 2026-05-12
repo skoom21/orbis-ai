@@ -66,10 +66,128 @@ class AgentState(TypedDict):
     conversation_id: NotRequired[str]
 
 
+# Human-readable labels for agents and tools — used in the SSE event stream
+# so the frontend can display them without any mapping logic.
+AGENT_LABELS: dict[str, str] = {
+    "planner":   "Planner Agent",
+    "flight":    "Flight Agent",
+    "hotel":     "Hotel Agent",
+    "itinerary": "Itinerary Agent",
+    "booking":   "Booking Agent",
+    "verifier":  "Verifier Agent",
+}
+
+TOOL_LABELS: dict[str, str] = {
+    "search_flights":         "Searching for flights",
+    "get_airport_info":       "Looking up airport info",
+    "search_hotels":          "Searching for hotels",
+    "get_nearby_attractions": "Finding nearby attractions",
+    "get_hotel_details":      "Getting hotel details",
+    "prebook_hotel_rate":     "Pre-booking hotel rate",
+    "book_hotel_rate":        "Confirming hotel booking",
+    "prebook_hotel":          "Pre-booking hotel",
+    "book_hotel":             "Confirming hotel booking",
+    "get_user_preferences":   "Loading your preferences",
+    "get_travel_history":     "Loading your travel history",
+    "search_destinations":    "Searching destinations",
+    "search_attractions":     "Finding attractions",
+    "search_airports":        "Looking up airports",
+    "create_trip":            "Creating your trip",
+    "get_trip_summary":       "Getting trip summary",
+    "update_itinerary":       "Updating itinerary",
+    "create_booking":         "Recording booking",
+}
+
+
+def _safe_json(value: object, max_len: int = 400) -> object:
+    """
+    Return a JSON-serialisable version of *value*, truncated to *max_len*
+    characters when converted to a string.  Used to sanitise tool inputs
+    before embedding them in SSE payloads.
+    """
+    try:
+        serialised = json.dumps(value, default=str)
+        if len(serialised) > max_len:
+            return {"_truncated": serialised[:max_len] + "…"}
+        return json.loads(serialised)
+    except Exception:
+        return {"_raw": str(value)[:max_len]}
+
+
+def _build_suggestions(
+    agent_type: str,
+    tools_called: set[str],
+    flight_data: list | None = None,
+    hotel_data: list | None = None,
+) -> list[str]:
+    """Return 3-4 context-aware follow-up suggestion chips for the frontend."""
+    searched_flights = "search_flights" in tools_called
+    searched_hotels  = "search_hotels"  in tools_called
+    created_trip     = "create_trip"    in tools_called
+    created_booking  = "create_booking" in tools_called
+
+    if agent_type == "flight":
+        if flight_data:
+            chips: list[str] = []
+            try:
+                sorted_fl = sorted(flight_data, key=lambda f: float(f.get("price_usd", 9999) or 9999))
+            except Exception:
+                sorted_fl = flight_data
+            for f in sorted_fl[:2]:
+                airline = (f.get("airline") or "")[:14]
+                fn = f.get("flight_number", "")
+                price = f.get("price_usd")
+                if airline and price:
+                    label = f"Book {airline} {fn} (${price})" if fn else f"Book {airline} (${price})"
+                    chips.append(label[:40])
+            chips += ["Try different dates", "Search hotels too"]
+            return chips[:4]
+        if searched_flights:
+            return ["Search hotels too", "Try different dates", "One-way instead", "Add return flight"]
+        return ["Search flights", "Which airport?", "Check availability"]
+
+    if agent_type == "hotel":
+        if hotel_data:
+            chips = []
+            try:
+                sorted_ht = sorted(hotel_data, key=lambda h: float(h.get("lowest_price", h.get("price_per_night", h.get("price_usd", 9999))) or 9999))
+            except Exception:
+                sorted_ht = hotel_data
+            for h in sorted_ht[:2]:
+                name = (h.get("name") or h.get("hotel_name") or "")[:22]
+                price = h.get("lowest_price") or h.get("price_per_night") or h.get("price_usd")
+                if name and price:
+                    chips.append(f"Book {name} (${price}/night)"[:40])
+            chips += ["Search flights too", "Show cheaper options"]
+            return chips[:4]
+        if searched_hotels:
+            return ["Book cheapest option", "Show cheaper options", "What's nearby?", "Search flights too"]
+        return ["Search hotels", "Check availability", "See all options"]
+
+    if agent_type == "planner":
+        if created_trip:
+            return ["Search flights now", "Find hotels", "Build itinerary", "View my trip"]
+        return ["Search flights", "Find hotels", "Build day-by-day itinerary", "Save this trip"]
+
+    if agent_type == "itinerary":
+        return ["Update the schedule", "Add an activity", "Book hotels", "Check flights"]
+
+    if agent_type == "booking":
+        if created_booking:
+            return ["View my bookings", "Add hotel to trip", "Add flight to trip", "Build itinerary"]
+        return ["Confirm booking", "View my trips", "Check prices again"]
+
+    if agent_type == "verifier":
+        return ["Fix the issues", "Everything looks good, confirm", "Re-plan the trip"]
+
+    # Generic fallback
+    return ["Search flights", "Find hotels", "Plan a trip"]
+
+
 class LangGraphOrchestrator:
     """
     LangGraph-based multi-agent orchestrator
-    
+
     Uses StateGraph to route user queries to specialized agents:
     - Flight Agent: Flight search, booking
     - Hotel Agent: Hotel search, booking
@@ -77,7 +195,7 @@ class LangGraphOrchestrator:
     - Itinerary Agent: Itinerary management
     - Booking Agent: Booking coordination
     """
-    
+
     # Tool assignments per agent
     AGENT_TOOLS = {
         "planner": DATABASE_TOOLS + TRIP_TOOLS,
@@ -451,6 +569,17 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
     ):
         """
         Stream responses using LangGraph graph execution.
+
+        Emits a rich event stream so the frontend can display a live
+        agent-activity trace (step pills, tool-call cards, agent badge):
+
+            step        – orchestration milestones (intent_analysis, routing, fallback)
+            agent_start – a specialised agent node has begun
+            agent_end   – a specialised agent node finished
+            tool_start  – an agent invoked a tool
+            tool_end    – a tool call returned
+            content     – a text token from the LLM
+            done        – stream complete
         """
         import time as _t
         AGENT_NODES = {"flight", "hotel", "planner", "itinerary", "booking", "verifier"}
@@ -461,20 +590,83 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
             conversation_id=conversation_id,
         )
 
-        started_agents = set()
+        started_agents: set[str] = set()
+        _active_agent: str = ""
+        _tools_called: set[str] = set()
         _token_n = 0
         _t0 = _t.time()
+        _last_flight_data: list | None = None
+        _last_hotel_data: list | None = None
+
+        # Emit immediately so the frontend has something to show before the
+        # graph even starts executing (eliminates the "dead air" gap).
+        yield {
+            "type": "step",
+            "step": "intent_analysis",
+            "label": "Analyzing your request",
+            "status": "running",
+        }
 
         async for event in self.graph.astream_events(initial_state, version="v2"):
             kind = event["event"]
             name = event["name"]
 
-            # Detect agent start
+            # ── Agent node starts ───────────────────────────────────────────
             if kind == "on_chain_start" and name in AGENT_NODES and name not in started_agents:
                 started_agents.add(name)
-                yield {"type": "agent_start", "agent_type": name}
+                _active_agent = name
+                agent_label = AGENT_LABELS.get(name, f"{name.title()} Agent")
+                # First agent start also closes off the intent-analysis step
+                yield {
+                    "type": "step",
+                    "step": "routing",
+                    "label": f"Routing to {agent_label}",
+                    "status": "done",
+                }
+                yield {
+                    "type": "agent_start",
+                    "agent_type": name,
+                    "label": agent_label,
+                }
 
-            # Detect content streaming
+            # ── Tool call starts ────────────────────────────────────────────
+            elif kind == "on_tool_start":
+                _tools_called.add(name)
+                tool_input = event.get("data", {}).get("input", {})
+                yield {
+                    "type": "tool_start",
+                    "tool": name,
+                    "label": TOOL_LABELS.get(name, name.replace("_", " ").title()),
+                    "input": _safe_json(tool_input),
+                }
+
+            # ── Tool call ends ──────────────────────────────────────────────
+            elif kind == "on_tool_end":
+                raw_output = event.get("data", {}).get("output", "")
+                output_str = str(raw_output) if raw_output is not None else ""
+                # Capture flight/hotel data so we can emit it as a content
+                # event after streaming — this gets included in full_response
+                # saved to the DB and rendered as cards on the frontend.
+                try:
+                    if isinstance(raw_output, dict):
+                        payload = raw_output
+                    else:
+                        payload = json.loads(output_str)
+                    if isinstance(payload, dict) and not payload.get("error"):
+                        if payload.get("flights"):
+                            _last_flight_data = payload["flights"]
+                        if payload.get("hotels"):
+                            _last_hotel_data = payload["hotels"]
+                except Exception:
+                    pass
+                yield {
+                    "type": "tool_end",
+                    "tool": name,
+                    "status": "success",
+                    "output_preview": output_str[:300] or None,
+                }
+
+            # ── LLM token streaming ─────────────────────────────────────────
             elif kind == "on_chat_model_stream":
                 chunk = event["data"]["chunk"]
                 if chunk.content:
@@ -491,13 +683,12 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
                         )
                         yield {"type": "content", "content": content}
 
-            # Detect agent end — also rescue fallback responses.
-            # When the ReAct agent fails and the non-streaming Gemini fallback
-            # fires, no on_chat_model_stream events are emitted. The response
-            # still lands in state["messages"] so we extract it here to avoid
-            # sending an empty reply to the client.
+            # ── Agent node ends ─────────────────────────────────────────────
             elif kind == "on_chain_end" and name in AGENT_NODES:
                 if _token_n == 0:
+                    # The ReAct agent failed and Gemini fallback was used.
+                    # No on_chat_model_stream events fired, so we pull the
+                    # response from the chain output and surface a warning.
                     output = event.get("data", {}).get("output", {})
                     output_msgs = output.get("messages", []) if isinstance(output, dict) else []
                     for msg in reversed(output_msgs):
@@ -510,6 +701,12 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
                                     chars=len(fallback_text),
                                     conversation_id=conversation_id,
                                 )
+                                yield {
+                                    "type": "step",
+                                    "step": "fallback",
+                                    "label": "Using cached knowledge (live data unavailable)",
+                                    "status": "warning",
+                                }
                                 yield {"type": "content", "content": fallback_text}
                             break
                 yield {"type": "agent_end", "agent_type": name}
@@ -520,4 +717,23 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
             total_ms=round((_t.time() - _t0) * 1000),
             conversation_id=conversation_id,
         )
+
+        # Emit flight/hotel results as content events so they're included in
+        # full_response (saved to DB) and rendered as cards on the frontend.
+        if _last_flight_data:
+            json_block = json.dumps({"flights": _last_flight_data}, default=str)
+            yield {"type": "content", "content": f"\n\n```json\n{json_block}\n```"}
+        if _last_hotel_data:
+            json_block = json.dumps({"hotels": _last_hotel_data}, default=str)
+            yield {"type": "content", "content": f"\n\n```json\n{json_block}\n```"}
+
+        # ── Context-aware follow-up suggestions ────────────────────────────
+        suggestions = _build_suggestions(
+            _active_agent, _tools_called,
+            flight_data=_last_flight_data,
+            hotel_data=_last_hotel_data,
+        )
+        if suggestions:
+            yield {"type": "suggestions", "suggestions": suggestions}
+
         yield {"type": "done"}

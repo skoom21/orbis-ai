@@ -11,6 +11,7 @@ interface ChatContextValue {
   messagesLoading: boolean
   isStreaming: boolean
   streamingMessage?: string
+  suggestions: string[]
   sendMessage: (message: string) => void
   stopStreaming: () => void
   regenerateLastMessage: () => void
