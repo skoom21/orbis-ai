@@ -360,7 +360,7 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                        const parsed = JSON.parse(cleanData);
                        // First check if it's an array of single items mapped to <HotelCard>
                        // If the AI accidentally returned [{...hotel...}] instead of {"hotels": []}
-                       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id && !parsed.hotels) {
+                       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
                            return <div className="space-y-4">{parsed.map((p, i) => <HotelCard key={i} data={JSON.stringify(p)} />)}</div>
                        }
                        const structured = parseStructuredPayload(parsed);
