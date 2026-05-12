@@ -1,24 +1,54 @@
-/LibreChat
+# Dependencies / build outputs
 /node_modules
 /dist
-/.env
 /.next
 /.vercel
 /.turbo
-.DS_Store
-.vscode/
-.idea/
-*.log  
+build/
+.eggs/
+*.egg-info/
+
+# Python
 venv/
+env/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-env/
 *.sqlite3
 *.db
-*.egg-info/
-build/
-.eggs/
+
+# Secrets / env files
 .env
+.env.*
+!.env.example
 apps/api/.env
+
+# Supabase CLI temp state
+supabase/.temp/
+
+# Logs
+*.log
+logs/
+
+# Large binary / compiled files
+*.pdf
+*.docx
+backup.sql
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Internal AI assistant working docs (not project docs)
+claude-docs/
+
+# LibreChat clone (separate project)
+/LibreChat
+
+# One-off fix scripts
+fix-*.js
+fix_*.js
+update-*.js
+test_stream.py
