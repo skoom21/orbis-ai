@@ -396,14 +396,15 @@ class DatabaseService:
                 result = self.supabase.table("messages")\
                     .select("*")\
                     .eq("conversation_id", conversation_id)\
-                    .order("created_at", desc=False)\
+                    .order("created_at", desc=True)\
                     .limit(limit)\
                     .execute()
                 
                 if result.data:
                     self.circuit_breaker.record_success()
                     logger.debug("Retrieved messages from Supabase", conversation_id=conversation_id, count=len(result.data))
-                    return result.data
+                    # The array is newest-first. Reverse it to make it chronological (oldest-first)
+                    return list(reversed(result.data))
                     
             except Exception as e:
                 logger.error("Error getting messages from Supabase", conversation_id=conversation_id, error=str(e))

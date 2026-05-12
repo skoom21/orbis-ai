@@ -66,6 +66,7 @@ export type MessageContentPart =
   | { type: 'search-results'; items: MessageSourceItem[] }
   | { type: 'attachments'; items: MessageAttachmentItem[] }
   | { type: 'hotel-results'; title?: string; subtitle?: string; items: HotelResultItem[]; actions?: MessageActionItem[] }
+  | { type: 'flight-results'; data: unknown }
   | { type: 'booking-update'; title?: string; subtitle?: string; items: BookingSummaryItem[]; actions?: MessageActionItem[] }
   | { type: 'artifact'; label: string; data?: unknown }
 

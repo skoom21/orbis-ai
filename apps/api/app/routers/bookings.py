@@ -50,6 +50,7 @@ class FlightSearchRequest(BaseModel):
 
 class HotelSearchRequest(BaseModel):
     city: str
+    country_code: str = ""
     checkin: str
     checkout: str
     guests: int = 1
@@ -117,6 +118,7 @@ async def search_hotels_endpoint(
     from app.agents.tools.hotel_tools import search_hotels
     result = await search_hotels.ainvoke({
         "city": request.city,
+        "country_code": request.country_code,
         "checkin": request.checkin,
         "checkout": request.checkout,
         "guests": request.guests,
@@ -279,7 +281,7 @@ async def create_booking(
             "details": data.details,
             "price": data.price,
             "currency": data.currency,
-            "status": "pending",
+            "status": "searching",
         }).execute()
         if result.data:
             return result.data[0]

@@ -1,0 +1,1378 @@
+\documentclass[12pt, a4paper]{article}
+
+% ============================================================
+% PACKAGES (LuaLaTeX)
+% ============================================================
+\usepackage{fontspec}
+\usepackage[a4paper, top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage[english]{babel}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{ragged2e}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{microtype}
+
+% ============================================================
+% FONTS
+% ============================================================
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont[Scale=0.88]{Courier New}
+
+% ============================================================
+% SPACING
+% ============================================================
+\setstretch{1.5}
+
+% ============================================================
+% COLORS
+% ============================================================
+\definecolor{darkblue}{RGB}{0,51,102}
+\definecolor{medgray}{RGB}{100,100,100}
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{accentblue}{RGB}{30,100,200}
+\definecolor{highlightyellow}{RGB}{255,250,220}
+
+% ============================================================
+% SECTION FORMATTING
+% ============================================================
+\titleformat{\section}
+  {\bfseries\fontsize{14}{16}\selectfont\color{darkblue}}
+  {\thesection}{1em}{\MakeUppercase}
+
+\titleformat{\subsection}
+  {\bfseries\fontsize{12}{14}\selectfont\color{darkblue}}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\bfseries\fontsize{11}{13}\selectfont\itshape}
+  {\thesubsubsection}{1em}{}
+
+\titlespacing*{\section}{0pt}{1.8ex plus .5ex minus .2ex}{1ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.5ex plus .4ex minus .2ex}{0.8ex plus .2ex}
+
+% ============================================================
+% HEADERS AND FOOTERS
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{medgray}Orbis AI --- Final Year Project Report}
+\fancyhead[R]{\small\color{medgray}Spring 2026}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ============================================================
+% HYPERLINKS
+% ============================================================
+\hypersetup{
+  colorlinks=true,
+  linkcolor=darkblue,
+  urlcolor=accentblue,
+  citecolor=darkblue,
+  pdfauthor={M. Talha Yousif, Salik Ahmed Bhatti, Toheed Ali},
+  pdftitle={Orbis AI -- Final Year Project Report},
+  pdfsubject={FYP Final Report Spring 2026}
+}
+
+% ============================================================
+% CODE LISTINGS
+% ============================================================
+\lstset{
+  backgroundcolor=\color{lightgray},
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  captionpos=b,
+  commentstyle=\color{codegreen},
+  keywordstyle=\bfseries\color{darkblue},
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  showstringspaces=false,
+  frame=single,
+  rulecolor=\color{medgray},
+  xleftmargin=1em,
+  framexleftmargin=1em
+}
+
+% ============================================================
+% TCOLORBOX
+% ============================================================
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{highlightbox}[1][]{
+  colback=highlightyellow,
+  colframe=darkblue,
+  fonttitle=\bfseries\small,
+  coltitle=white,
+  boxrule=0.8pt,
+  arc=2mm,
+  title=#1,
+  breakable
+}
+
+\newtcolorbox{archbox}{
+  colback=lightgray,
+  colframe=darkblue,
+  boxrule=0.8pt,
+  arc=2mm,
+  fontupper=\ttfamily\small,
+  breakable
+}
+
+% ============================================================
+% CUSTOM COMMANDS
+% ============================================================
+\newcommand{\api}[1]{\texttt{#1}}
+\newcommand{\tool}[1]{\texttt{\textbf{#1}}}
+\newcommand{\tech}[1]{\textbf{#1}}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+\begin{document}
+
+% ----------------------------------------------------------
+% TITLE PAGE
+% ----------------------------------------------------------
+\begin{titlepage}
+\centering
+\vspace*{0.3cm}
+
+{\fontsize{12}{14}\selectfont \textbf{CS/AI/CY/SE4092 --- Final Year Project}}\\[0.8em]
+
+\includegraphics[width=0.18\linewidth]{National_University_of_Computer_and_Emerging_Sciences_logo.png}\\[0.8em]
+
+\rule{\textwidth}{1.2pt}\\[0.4em]
+{\fontsize{24}{28}\selectfont \textbf{ORBIS AI}}\\[0.3em]
+{\fontsize{13}{16}\selectfont \textit{An Intelligent Agentic Travel Planning and Booking System}}\\[0.3em]
+\rule{\textwidth}{1.2pt}\\[1.2em]
+
+{\fontsize{12}{14}\selectfont \textbf{PROJECT SUPERVISOR}}\\[0.2em]
+{\fontsize{11}{13}\selectfont Ms.\ Sumaiyah Zahid}\\[1.0em]
+
+{\fontsize{12}{14}\selectfont \textbf{PROJECT CO-SUPERVISOR}}\\[0.2em]
+{\fontsize{11}{13}\selectfont N/A}\\[1.0em]
+
+{\fontsize{12}{14}\selectfont \textbf{PROJECT TEAM}}\\[0.4em]
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{ll}
+  \textbf{M. Talha Yousif} (Leader) & 22K-5146 \\
+  \textbf{Salik Ahmed Bhatti}        & 22K-5114 \\
+  \textbf{Toheed Ali}                & 22K-4027 \\
+\end{tabular}\\[1.2em]
+
+{\fontsize{11}{13}\selectfont Submitted in partial fulfilment of the requirements for the degree of\\[0.2em]
+Bachelor of Science in Computer Science}\\[1.2em]
+
+\vfill
+
+{\fontsize{11}{13}\selectfont \textbf{FAST SCHOOL OF COMPUTING}}\\[0.2em]
+{\fontsize{11}{13}\selectfont \textbf{NATIONAL UNIVERSITY OF COMPUTER AND EMERGING SCIENCES}}\\[0.2em]
+{\fontsize{11}{13}\selectfont \textbf{KARACHI CAMPUS --- SPRING 2026}}
+\end{titlepage}
+
+% ----------------------------------------------------------
+% APPROVAL SHEET
+% ----------------------------------------------------------
+\newpage
+\thispagestyle{empty}
+\begin{center}
+  {\fontsize{18}{22}\selectfont \textbf{APPROVAL SHEET}}\\[2.5em]
+  {\fontsize{15}{18}\selectfont \textbf{Orbis AI}}\\[0.5em]
+  {\fontsize{12}{14}\selectfont \textit{An Intelligent Agentic Travel Planning and Booking System}}\\[4em]
+\end{center}
+
+\renewcommand{\arraystretch}{1.8}
+\begin{tabular}{p{5cm} p{9cm}}
+  \textbf{Project Supervisor:}     & Ms.\ Sumaiyah Zahid \\
+  \textbf{Project Co-Supervisor:}  & N/A \\[0.5em]
+  \textbf{Project Team:}           & \\
+  \hspace{1cm} M. Talha Yousif (Leader) & 22K-5146 \\
+  \hspace{1cm} Salik Ahmed Bhatti       & 22K-5114 \\
+  \hspace{1cm} Toheed Ali               & 22K-4027 \\[0.5em]
+  \textbf{Submission Date:}        & May 2026 \\
+\end{tabular}
+
+\vspace{4em}
+
+\begin{tabular}{p{7cm} p{7cm}}
+  \rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\[0.3em]
+  Ms.\ Bakhtawar Abbasi   & N/A \\
+  \textbf{Supervisor}    & \textbf{Co-Supervisor} \\[3em]
+  \rule{6cm}{0.4pt} & \\[0.3em]
+  \textbf{External Examiner} & \\
+\end{tabular}
+
+\vspace{4em}
+
+\begin{center}
+  \textbf{FAST SCHOOL OF COMPUTING}\\
+  \textbf{NATIONAL UNIVERSITY OF COMPUTER AND EMERGING SCIENCES}\\
+  \textbf{KARACHI CAMPUS}
+\end{center}
+
+% ----------------------------------------------------------
+% ABSTRACT
+% ----------------------------------------------------------
+\newpage
+\pagenumbering{roman}
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+\textbf{Orbis AI} is an intelligent, agentic travel planning and booking system that transforms how users plan and execute trips. The system combines a state-of-the-art conversational AI interface with a multi-agent orchestration backend to deliver personalised, end-to-end travel assistance covering flight search, hotel discovery, itinerary generation, and booking management — all through a single natural language conversation.
+
+The core innovation is a \textbf{LangGraph-based multi-agent architecture} comprising six specialised ReAct agents --- Planner, Flight, Hotel, Itinerary, Booking, and Verifier --- coordinated by a central Orchestrator that performs intent routing using Google Gemini 2.5 Flash. Each agent is equipped with a curated tool suite: the Flight Agent uses the \textbf{SerpApi Google Flights} integration, the Hotel Agent calls the \textbf{liteAPI} hotel platform, and all agents share database and trip management tools built on Supabase PostgreSQL. A lightweight adaptive scoring layer progressively improves recommendations based on user interaction history.
+
+The backend is built on \textbf{FastAPI} with real-time Server-Sent Event (SSE) streaming, Supabase PostgreSQL for persistence, Redis for caching, and pgvector for Retrieval-Augmented Generation (RAG). User preferences and travel knowledge are embedded using Gemini's \texttt{embedding-001} model and stored as 768-dimensional vectors, enabling semantic personalisation.
+
+The frontend is a \textbf{Next.js 15} application featuring a production-quality streaming chat interface, structured travel result cards, side-panel artifact displays, interactive itinerary dashboards, and maps-based trip visualisation. A real-time constraint optimisation engine dynamically re-plans itineraries when conditions change, and an AI-powered multi-modal trip summariser generates rich visual and textual trip overviews.
+
+The system demonstrates a production-oriented architecture with circuit breaker patterns, structured logging, observability hooks, and multi-layer fallback strategies.
+
+\vspace{1em}
+\noindent\textbf{Keywords:} Agentic AI, Multi-Agent Systems, Travel Planning, LangGraph, Retrieval-Augmented Generation, Large Language Models, FastAPI, Next.js, Google Gemini, SerpApi, liteAPI.
+
+% ----------------------------------------------------------
+% TABLE OF CONTENTS
+% ----------------------------------------------------------
+\newpage
+\tableofcontents
+\newpage
+
+% ----------------------------------------------------------
+% BODY: arabic page numbers from here
+% ----------------------------------------------------------
+\pagenumbering{arabic}
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+
+\subsection{Background and Motivation}
+
+Travel planning today is inherently fragmented. Users must navigate numerous disconnected platforms --- one for flights, another for hotels, a third for activities --- and manually reconcile prices, availability, and policy constraints across all of them. The resulting cognitive overhead discourages optimal decision-making and leads to missed opportunities for personalisation and cost saving.
+
+At the same time, large language models (LLMs) have matured to a point where conversational interfaces can now understand complex, multi-step user intent and act as orchestrators for downstream tools and APIs. The combination of natural language understanding, structured tool use, and agent-based design patterns creates an opportunity to build a unified travel companion that replaces fragmented tab-switching with a single, intelligent conversation.
+
+\textbf{Orbis AI} was designed to address this gap. The project's central premise is that an agentic AI architecture --- where specialised agents share context, divide responsibility, and collaborate via a graph-based orchestration layer --- can deliver the depth of a domain expert while maintaining the accessibility of a conversational interface. Beyond query answering, Orbis AI actively plans, searches, optimises, and books, adapting dynamically when constraints change.
+
+\subsection{Project Objectives}
+
+The primary objectives of Orbis AI are:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.4em]
+  \item Build a conversational travel planning interface that accepts natural language queries and responds with structured, actionable results streamed in real time.
+  \item Implement a multi-agent system using LangGraph that routes user intent to specialised agents for flights, hotels, itineraries, bookings, and verification.
+  \item Integrate live external travel APIs --- SerpApi Google Flights for flight data and liteAPI for hotel availability and booking --- to deliver real-world results.
+  \item Apply RAG-based personalisation using Gemini embeddings and pgvector to inject user preferences and destination knowledge into agent prompts.
+  \item Deliver real-time streaming responses via SSE so users see agent progress incrementally as reasoning and tool calls occur.
+  \item Implement a constraint optimisation engine that dynamically re-plans itineraries when flights are delayed, hotels become unavailable, or budgets change.
+  \item Generate rich, multi-modal trip summaries combining natural language, maps, landmark information, and travel visualisations.
+  \item Persist trip plans, booking records, and conversation history in a structured PostgreSQL database, with full observability over agent execution.
+\end{enumerate}
+
+\subsection{Scope}
+
+\subsubsection{In Scope}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item Conversational trip planning via natural language, with multi-turn memory.
+  \item Live flight search powered by SerpApi (Google Flights data).
+  \item Live hotel search and pre-booking via liteAPI v3.0.
+  \item Day-by-day itinerary generation with constraint satisfaction.
+  \item Dynamic re-planning when travel conditions change.
+  \item AI-powered multi-modal trip summarisation.
+  \item User profile, preferences, and travel history management.
+  \item Booking record creation and management with Stripe sandbox payments.
+  \item RAG-based contextual personalisation.
+  \item Real-time streaming chat interface with travel-specific UI components.
+  \item Agent observability: run logging, tool call logging, token tracking.
+\end{itemize}
+
+\subsubsection{Out of Scope}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item Car rentals, travel insurance, and visa processing services.
+  \item Production-grade payment processing (Stripe integration is sandbox only).
+  \item Multi-language interface support beyond English.
+  \item Native mobile applications.
+  \item Corporate travel management and compliance workflows.
+\end{itemize}
+
+\subsection{Report Organisation}
+
+The remainder of this report is organised as follows. Section~2 reviews related work. Section~3 presents system requirements. Section~4 describes the system design and architecture. Section~5 details the implementation including agent tools, the UI, and the optimisation engine. Section~6 highlights completed feature deliverables. Section~7 covers testing and evaluation. Section~8 outlines future work. Section~9 concludes.
+
+% ============================================================
+\section{Related Work}
+% ============================================================
+
+\subsection{AI-Powered Travel Assistants}
+
+Early AI travel assistants such as Google Travel and Kayak's AI chatbot demonstrated that LLMs can answer travel-related questions and surface basic recommendations. However, these systems lack the ability to perform multi-step agentic workflows --- they cannot, for example, search flights, evaluate hotel options against a stated budget, and then generate a coherent day-by-day itinerary within a single conversation. Orbis AI bridges this gap by treating the entire planning pipeline as a coordinated, multi-agent workflow rather than a single-turn Q\&A interaction.
+
+\subsection{Large Language Models and Tool Use}
+
+The release of instruction-tuned LLMs such as GPT-4 and Google Gemini, combined with standardised function-calling APIs, made it practical to build agents that invoke real-world tools. ReAct~\cite{yao2022react} formalised the pattern of interleaving reasoning (\textit{Thought}) with action steps (\textit{Act}) and observation of results (\textit{Observe}), enabling agents to iteratively search, compute, and refine outputs. Orbis AI adopts the ReAct pattern as the inner-loop reasoning strategy for each specialised agent, implemented via LangGraph's \texttt{create\_react\_agent} prebuilt.
+
+\subsection{Multi-Agent Systems}
+
+Microsoft AutoGen~\cite{wu2023autogen} and LangChain Agents established frameworks for coordinating multiple LLM-backed agents. LangGraph~\cite{langgraph2024}, built on top of LangChain, extends this to stateful, graph-based orchestration, allowing conditional routing between agents and robust state accumulation across turns. Orbis AI uses LangGraph's \texttt{StateGraph} as its orchestration primitive, treating each specialised agent as a node with typed conditional edges that determine the next node based on intent classification by the Orchestrator.
+
+\subsection{Retrieval-Augmented Generation}
+
+RAG~\cite{lewis2020rag} addresses the hallucination problem in LLMs by augmenting prompts with retrieved, factual context. In the travel domain this means injecting destination guides, user preference histories, and past bookings into the agent's context window before generation. Orbis AI implements RAG using Gemini's \texttt{models/gemini-embedding-001} (768 dimensions) and PostgreSQL's pgvector extension, with cosine-distance similarity search over a \texttt{travel\_guides} table seeded with destination knowledge.
+
+\subsection{Constraint Optimisation in Planning}
+
+Constraint satisfaction and scheduling problems are well-studied in operations research. Tools such as Google OR-Tools~\cite{ortools} provide efficient solvers for constraint satisfaction problems (CSP) and vehicle routing, which map naturally to travel itinerary optimisation. Orbis AI's dynamic re-planning engine draws on these principles to handle budget constraints, timing windows, and route feasibility in real time.
+
+\subsection{Streaming Conversational Interfaces}
+
+Server-Sent Events (SSE) have emerged as a lightweight alternative to WebSockets for unidirectional, server-to-client streaming. Leading AI chat products use SSE to deliver token-by-token responses. Orbis AI applies the same pattern, streaming agent reasoning steps and tool call results to give users transparent, incremental feedback during complex planning tasks --- a pattern that is both user-experience-critical and architecturally non-trivial.
+
+\subsection{Positioning of Orbis AI}
+
+Compared to existing work, Orbis AI's distinguishing contributions are: (1) a domain-specialised multi-agent architecture where agent roles map directly to the sub-tasks of travel planning; (2) live API integration with SerpApi and liteAPI rather than mocked data; (3) RAG personalisation grounded in user-stored preferences and travel history; (4) dynamic constraint-based re-planning; (5) AI-generated multi-modal trip summaries; and (6) a production-oriented system with circuit breakers, fallbacks, and full observability instrumentation.
+
+% ============================================================
+\section{System Requirements}
+% ============================================================
+
+\subsection{Functional Requirements}
+
+\subsubsection{User Management}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall support registration and login via email/password and OAuth (Supabase Auth).
+  \item The system shall maintain a user profile including name, email, and account status.
+  \item The system shall store and retrieve structured travel preferences: travel style, accommodation type, dietary restrictions, preferred airlines, and budget range.
+  \item The system shall maintain a travel history per user for personalisation and RAG retrieval.
+\end{itemize}
+
+\subsubsection{Conversational Planning}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall accept natural language messages and route them to the appropriate specialised agent.
+  \item The system shall maintain multi-turn conversation history and inject it into agent prompts.
+  \item The system shall stream agent responses token-by-token via SSE.
+  \item The system shall auto-generate a conversation title after the first exchange.
+  \item The system shall support creating, listing, and retrieving conversations per user.
+\end{itemize}
+
+\subsubsection{Flight Search}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall search live flights given origin, destination, dates, passenger count, and cabin class using SerpApi's Google Flights integration.
+  \item The system shall return structured results including airline, price, duration, departure/arrival times, stops, and flight numbers.
+  \item The system shall resolve plain city names to IATA codes automatically.
+  \item The system shall support one-way and return flight queries.
+\end{itemize}
+
+\subsubsection{Hotel Search and Booking}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall search hotels for a given city and date range via liteAPI v3.0.
+  \item The system shall return hotel details including name, star rating, price per night, amenities, images, and cancellation policy.
+  \item The system shall support pre-booking (rate hold) and confirmed booking with traveller details.
+  \item The system shall filter hotels by price, ratings, and location.
+\end{itemize}
+
+\subsubsection{Itinerary and Constraint Management}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall generate a detailed, day-by-day itinerary given trip parameters.
+  \item The system shall evaluate and enforce budget constraints across flights, hotels, and activities.
+  \item The system shall detect infeasible constraints and propose alternative configurations.
+  \item The system shall support dynamic re-planning when flights are delayed, hotels become unavailable, or user preferences change.
+  \item The system shall persist trip records and associated bookings.
+\end{itemize}
+
+\subsubsection{Multi-Modal Summarisation}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall generate natural language summaries of complete itineraries.
+  \item The system shall render interactive maps displaying travel routes and destination points.
+  \item The system shall incorporate landmark images, weather information, and estimated travel times.
+  \item The system shall produce a visually annotated, presentation-quality trip overview.
+\end{itemize}
+
+\subsubsection{RAG Personalisation}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall embed user queries and retrieve semantically similar travel guides and preference context.
+  \item The system shall inject retrieved context into agent system prompts before tool invocation.
+  \item The system shall cache embeddings in Redis to reduce redundant API calls.
+\end{itemize}
+
+\subsubsection{Observability}
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item The system shall log every agent run with execution status, duration, and token usage.
+  \item The system shall log every tool call with inputs, outputs, duration, and success/failure status.
+  \item The system shall expose health check endpoints for infrastructure monitoring.
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{|l|X|}
+  \hline
+  \textbf{Attribute} & \textbf{Requirement} \\
+  \hline
+  Response Time & First streamed token within 2 seconds of message submission. \\
+  \hline
+  Availability & 95\% uptime for demonstration environments. \\
+  \hline
+  Concurrency & At least 10 simultaneous users without degradation. \\
+  \hline
+  Security & HTTPS enforced; JWT authentication; API keys in environment variables only. \\
+  \hline
+  Scalability & Stateless FastAPI backend supports horizontal scaling; Redis decouples caching. \\
+  \hline
+  Resilience & Circuit breaker on Supabase and Redis; in-memory fallback for core operations. \\
+  \hline
+  Maintainability & Modular agent/tool structure; typed Pydantic schemas throughout. \\
+  \hline
+  Usability & Chat interface matches industry-standard AI assistant UX; mobile-responsive layout. \\
+  \hline
+\end{tabularx}
+\caption{Non-Functional Requirements Summary}
+\end{table}
+
+\subsection{Use Case Summary}
+
+The principal use cases are:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{UC-01: User Registration and Login} --- Authenticate via email/password or OAuth.
+  \item \textbf{UC-02: Start New Trip Planning} --- Initiate a trip conversation with a natural language request.
+  \item \textbf{UC-03: Search Flights} --- Receive live flight options for a given route via SerpApi.
+  \item \textbf{UC-04: Search and Book Hotels} --- Browse hotel options and create a confirmed booking via liteAPI.
+  \item \textbf{UC-05: Generate Itinerary} --- Obtain a structured day-by-day travel plan.
+  \item \textbf{UC-06: Refine and Re-Plan Itinerary} --- Request changes; receive dynamically re-optimised options.
+  \item \textbf{UC-07: View Multi-Modal Trip Summary} --- See an AI-generated visual and textual trip overview.
+  \item \textbf{UC-08: View and Manage Trips} --- Access saved trips, bookings, and conversation history.
+  \item \textbf{UC-09: Admin Observability (Future)} --- View agent run logs and performance dashboards.
+\end{itemize}
+
+% ============================================================
+\section{System Architecture and Design}
+% ============================================================
+
+\subsection{Overall System Architecture}
+
+Orbis AI follows a layered, service-oriented architecture with a specialised AI orchestration layer between the application layer and external service integrations.
+
+\begin{archbox}
+\begin{verbatim}
+Browser (Next.js 15) ────────────────────────────────────────
+      │  HTTPS / SSE                                         │
+      ▼                                                      │
+FastAPI Backend  ◄─────────────────────────────────── REST API
+      │
+      ├─ RAG Service  →  pgvector (Supabase)  →  Context
+      │
+      ▼
+LangGraph Orchestrator  (StateGraph)
+      │
+      ├─ Intent Analysis  →  Gemini 2.5 Flash
+      │
+      ├─ [flight]    → Flight Agent    → SerpApi (Google Flights)
+      ├─ [hotel]     → Hotel Agent     → liteAPI v3.0
+      ├─ [planner]   → Planner Agent   → DB + Trip Tools
+      ├─ [itinerary] → Itinerary Agent → DB + Trip Tools + OR-Tools
+      ├─ [booking]   → Booking Agent   → All Tools
+      └─ [verifier]  → Verifier Agent  → Trip + DB Tools
+                              │
+                     Supabase PostgreSQL + pgvector
+                     Redis  (Caching + Embeddings)
+                     Stripe Sandbox  (Payments)
+\end{verbatim}
+\end{archbox}
+
+\subsubsection{Presentation Layer}
+
+The frontend is a Next.js 15 application using the App Router. It communicates with the backend over REST (for CRUD operations) and SSE (for streaming chat). TypeScript, React 19, Radix UI primitives, and Tailwind CSS v4 are the core frontend technologies.
+
+\subsubsection{Application Layer}
+
+FastAPI serves all backend routes. A dependency injection system handles JWT authentication via Supabase tokens. Pydantic v2 models validate all request and response schemas. CORS middleware and SSE-compatible response headers allow the frontend to communicate with the API.
+
+\subsubsection{Intelligence Layer}
+
+LangGraph's \texttt{StateGraph} defines the orchestration graph. Each agent node is implemented as a LangGraph \texttt{create\_react\_agent} prebuilt with Gemini 2.5 Flash as the LLM and a specific set of LangChain \texttt{@tool}-decorated functions. The Orchestrator node runs first, classifies intent, and routes to the matching agent node via conditional edges.
+
+\subsubsection{Optimisation Layer}
+
+A constraint satisfaction and heuristic optimisation engine operates within the Itinerary Agent. It evaluates budget envelopes, timing windows, transit feasibility, and preference scores to produce coherent multi-day plans. When constraints are violated --- for example, a flight delay makes a hotel check-in infeasible --- the engine automatically triggers re-planning with updated parameters.
+
+\subsubsection{Data Layer}
+
+Supabase PostgreSQL stores all application data. The pgvector extension supports vector similarity search for RAG. Redis provides a fast caching layer for embeddings and conversation context. Supabase Auth manages JWT issuance and validation.
+
+\subsection{Agent Orchestration Design}
+
+\subsubsection{Shared State Schema}
+
+All nodes share a common \texttt{AgentState} TypedDict:
+
+\begin{lstlisting}[language=Python, caption=Shared Agent State]
+class AgentState(TypedDict):
+    messages:         Annotated[list[BaseMessage], add_messages]
+    intent:           str        # classified by orchestrator
+    agent_type:       str        # active agent name
+    entities:         dict       # extracted entities (dates, cities...)
+    context:          str        # RAG context + user profile
+    conversation_id:  str
+    user_id:          str
+    constraints:      dict       # budget, dates, preferences
+\end{lstlisting}
+
+The \texttt{messages} field uses LangGraph's \texttt{add\_messages} reducer so each node appends to the shared message list rather than replacing it, preserving the full conversation chain.
+
+\subsubsection{Orchestration Graph}
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{START} $\to$ \textbf{orchestrator\_node}: Receives user message, runs RAG context building, calls Gemini to classify intent into one of: \texttt{flight}, \texttt{hotel}, \texttt{planner}, \texttt{booking}, \texttt{verifier}, \texttt{itinerary}.
+  \item \textbf{orchestrator\_node} $\to$ [conditional edge] $\to$ appropriate agent node.
+  \item Agent node executes ReAct loop (Thought $\to$ Tool $\to$ Observe) until a final answer is produced.
+  \item \textbf{booking\_agent} $\to$ \textbf{verifier\_agent}: All booking actions pass through the verifier for consistency checking.
+  \item Agent node $\to$ \textbf{END}.
+\end{enumerate}
+
+\begin{lstlisting}[language=Python, caption=LangGraph Graph Construction]
+graph = StateGraph(AgentState)
+
+graph.add_node("orchestrator",    orchestrator_node)
+graph.add_node("flight_agent",    build_react_agent("flight"))
+graph.add_node("hotel_agent",     build_react_agent("hotel"))
+graph.add_node("planner_agent",   build_react_agent("planner"))
+graph.add_node("itinerary_agent", build_react_agent("itinerary"))
+graph.add_node("booking_agent",   build_react_agent("booking"))
+graph.add_node("verifier_agent",  build_react_agent("verifier"))
+
+graph.set_entry_point("orchestrator")
+graph.add_conditional_edges("orchestrator", route_by_intent, {
+    "flight":    "flight_agent",
+    "hotel":     "hotel_agent",
+    "planner":   "planner_agent",
+    "itinerary": "itinerary_agent",
+    "booking":   "booking_agent",
+})
+graph.add_edge("booking_agent",   "verifier_agent")
+graph.add_edge("verifier_agent",  END)
+for agent in ["flight_agent","hotel_agent","planner_agent","itinerary_agent"]:
+    graph.add_edge(agent, END)
+
+orchestrator = graph.compile()
+\end{lstlisting}
+
+\subsection{Agent Tool Suite}
+
+Each specialised agent is equipped with a curated, domain-specific tool set. The following tables summarise the complete tool inventory.
+
+\subsubsection{Flight Agent Tools}
+
+\begin{longtable}{|p{4.2cm}|p{9.5cm}|}
+  \hline
+  \textbf{Tool} & \textbf{Description} \\
+  \hline
+  \endfirsthead
+  \hline
+  \textbf{Tool} & \textbf{Description} \\
+  \hline
+  \endhead
+  \tool{search\_flights} & Calls SerpApi's Google Flights endpoint. Accepts origin/destination (city name or IATA), departure date, optional return date, passenger count, and cabin class. Returns structured JSON: airline, flight number, price, duration, stops, departure/arrival times. Built-in city-to-IATA mapping resolves plain city names automatically. \\
+  \hline
+  \tool{get\_flight\_details} & Retrieves detailed segment breakdown for a specific flight offer returned by \tool{search\_flights}, including layover information and baggage policy. \\
+  \hline
+  \tool{compare\_flight\_prices} & Aggregates multiple SerpApi calls across date ranges and returns a comparison matrix for price-vs-timing trade-off analysis. \\
+  \hline
+\end{longtable}
+
+\textbf{SerpApi Integration:} SerpApi wraps Google Flights with a structured JSON API and a permissive free tier (250 searches/month). Requests are made to \url{https://serpapi.com/search.json} with \texttt{engine=google\_flights}. The API key is stored in the \texttt{SERPAPI\_KEY} environment variable. The tool gracefully degrades to mock data when the key is absent, ensuring development-mode functionality.
+
+\subsubsection{Hotel Agent Tools}
+
+\begin{longtable}{|p{4.2cm}|p{9.5cm}|}
+  \hline
+  \textbf{Tool} & \textbf{Description} \\
+  \hline
+  \endfirsthead
+  \hline
+  \textbf{Tool} & \textbf{Description} \\
+  \hline
+  \endhead
+  \tool{search\_hotels} & Calls liteAPI v3.0 \texttt{/hotels} endpoint. Accepts city name, check-in/out dates, occupancy, and optional filters (max price, min rating, property type). Returns a normalised list of hotels with name, star rating, address, thumbnail, price per night, and cancellation terms. \\
+  \hline
+  \tool{get\_hotel\_rates} & Fetches live rate availability for a specific hotel ID and date combination from liteAPI's \texttt{/rates} endpoint. Returns available room types with full retail price breakdown including taxes. \\
+  \hline
+  \tool{prebook\_hotel\_rate} & Holds a specific rate offer using liteAPI's pre-book endpoint. Returns an offer ID valid for a short window, enabling the user to confirm without immediately committing. \\
+  \hline
+  \tool{book\_hotel\_rate} & Finalises a hotel reservation using a held offer ID with traveller details (guest name, contact). Returns a booking confirmation reference from liteAPI's live booking system. \\
+  \hline
+  \tool{get\_hotel\_details} & Retrieves extended property information including amenities list, images, check-in policies, and distance from city centre for a given hotel ID. \\
+  \hline
+\end{longtable}
+
+\textbf{liteAPI Integration:} liteAPI v3.0 (\url{https://api.liteapi.travel/v3.0}) is used for all hotel operations. The sandbox key is configured via \texttt{LITEAPI\_KEY}. A custom price normalisation function handles liteAPI's varied price payload shapes (\texttt{retailRate.total} as list, dict, or scalar).
+
+\subsubsection{Database and Trip Tools (Shared)}
+
+\begin{longtable}{|p{4.2cm}|p{9.5cm}|}
+  \hline
+  \textbf{Tool} & \textbf{Description} \\
+  \hline
+  \endfirsthead
+  \hline
+  \textbf{Tool} & \textbf{Description} \\
+  \hline
+  \endhead
+  \tool{get\_user\_preferences} & Retrieves the authenticated user's stored preferences from \texttt{user\_preferences}: travel style, interests, dietary restrictions, accommodation type, budget range, preferred airlines. \\
+  \hline
+  \tool{get\_travel\_history} & Fetches the user's past destinations and ratings from \texttt{user\_travel\_history} to inform personalised recommendations. \\
+  \hline
+  \tool{search\_destinations} & Performs semantic vector similarity search over the \texttt{travel\_guides} table using pgvector, returning contextually relevant destination information for RAG injection. \\
+  \hline
+  \tool{get\_nearby\_attractions} & Queries the \texttt{travel\_guides} table filtered by category (landmarks, restaurants, activities) for a given destination. \\
+  \hline
+  \tool{create\_trip} & Inserts a new trip record into \texttt{trips} with destinations (JSONB), dates, estimated budget, trip type, and traveller count. \\
+  \hline
+  \tool{get\_trip\_summary} & Retrieves a full trip record with all associated bookings and itinerary JSONB for display or re-planning. \\
+  \hline
+  \tool{update\_itinerary} & Persists an updated day-by-day itinerary JSONB back to the \texttt{trips} table after re-planning or refinement. \\
+  \hline
+  \tool{create\_booking} & Creates a booking record in \texttt{bookings} linked to a trip, capturing type (flight/hotel/activity), provider, cost, and confirmation reference. \\
+  \hline
+  \tool{update\_booking\_status} & Updates the status of an existing booking (pending $\to$ confirmed $\to$ cancelled). \\
+  \hline
+  \tool{save\_user\_preference} & Writes updated preference fields to \texttt{user\_preferences}, triggering an embedding refresh for the updated RAG profile. \\
+  \hline
+\end{longtable}
+
+\subsubsection{Tool Decorator Pattern}
+
+All tools use two stacked decorators: \texttt{@tool} (LangChain) makes the function callable by the ReAct agent; \texttt{@log\_tool\_call} (custom) records every invocation to the \texttt{tool\_calls} table in Supabase for observability. A third decorator \texttt{@tool\_error\_handler} wraps the call in a try/except that returns a structured JSON error string rather than raising, preventing individual tool failures from crashing the agent loop.
+
+\begin{lstlisting}[language=Python, caption=Tool Decorator Stack]
+@tool
+@log_tool_call
+@tool_error_handler
+async def search_flights(origin: str, destination: str, ...) -> str:
+    """Search live flights via SerpApi Google Flights."""
+    ...
+\end{lstlisting}
+
+\subsection{Database Design}
+
+\subsubsection{Entity-Relationship Overview}
+
+The central entity is \textbf{User}, who owns \textbf{Conversations} and \textbf{Trips}. Each Conversation contains \textbf{Messages} and is optionally associated with one Trip. Trips contain \textbf{Bookings} and \textbf{Payments}. Each Conversation may generate one or more \textbf{AgentRuns}, each recording one or more \textbf{ToolCalls}. Personalisation data lives in \textbf{UserPreferences} (with a 768-dimensional embedding vector) and the RAG knowledge base in \textbf{TravelGuides}.
+
+\subsubsection{Key Table Definitions}
+
+\begin{longtable}{|l|p{4.5cm}|p{5.5cm}|}
+  \hline
+  \textbf{Table} & \textbf{Key Columns} & \textbf{Purpose} \\
+  \hline
+  \endfirsthead
+  \hline
+  \textbf{Table} & \textbf{Key Columns} & \textbf{Purpose} \\
+  \hline
+  \endhead
+  \texttt{users} & id, email, full\_name, status & User accounts \\
+  \hline
+  \texttt{user\_preferences} & user\_id, travel\_style[], interests[], preference\_embedding VECTOR(768) & Preferences + semantic vector \\
+  \hline
+  \texttt{conversations} & id, user\_id, trip\_id, title, context\_summary & Chat session metadata \\
+  \hline
+  \texttt{messages} & id, conversation\_id, role, content, agent\_type, metadata JSONB & Chat messages \\
+  \hline
+  \texttt{trips} & id, user\_id, title, destinations JSONB, itinerary JSONB, status & Trip plans \\
+  \hline
+  \texttt{bookings} & id, trip\_id, booking\_type, provider, details JSONB, price, status & Reservations \\
+  \hline
+  \texttt{payments} & id, user\_id, trip\_id, amount, provider\_payment\_id, status & Payment records \\
+  \hline
+  \texttt{agent\_runs} & id, conversation\_id, agent\_type, status, duration\_ms, token\_usage & Execution telemetry \\
+  \hline
+  \texttt{tool\_calls} & id, agent\_run\_id, tool\_name, input, output, duration\_ms, success & Tool invocation logs \\
+  \hline
+  \texttt{travel\_guides} & id, destination, content, content\_embedding VECTOR(768), category & RAG knowledge base \\
+  \hline
+  \texttt{user\_travel\_history} & user\_id, destination, rating, tags & Past trips for RAG \\
+  \hline
+\end{longtable}
+
+\subsubsection{Vector Search Query}
+
+User preferences and travel guides are embedded with \texttt{models/gemini-embedding-001}. An IVFFlat index on \texttt{content\_embedding} enables sub-linear cosine similarity search:
+
+\begin{lstlisting}[language=SQL, caption=Semantic Destination Search via pgvector]
+SELECT destination, content, category
+FROM   travel_guides
+WHERE  (content_embedding <=> $1::vector) < 0.5
+ORDER  BY content_embedding <=> $1::vector
+LIMIT  5;
+\end{lstlisting}
+
+\subsection{API Design}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+  \hline
+  \textbf{Route Prefix} & \textbf{Methods} & \textbf{Description} \\
+  \hline
+  \api{/api/chat/stream}                    & POST       & SSE streaming endpoint; runs orchestrated agent \\
+  \hline
+  \api{/api/conversations}                   & GET, POST  & Conversation CRUD \\
+  \hline
+  \api{/api/conversations/\{id\}/messages}   & GET        & Retrieve message history \\
+  \hline
+  \api{/api/trips}                           & GET, POST, PUT, DELETE & Trip management \\
+  \hline
+  \api{/api/bookings}                        & GET, POST, PUT & Booking management \\
+  \hline
+  \api{/api/payments}                        & POST       & Payment initiation \\
+  \hline
+  \api{/api/users/me}                        & GET, PUT   & Profile and preferences \\
+  \hline
+  \api{/api/analytics}                       & GET        & Usage and performance metrics \\
+  \hline
+  \api{/api/health}                          & GET        & System health check \\
+  \hline
+\end{tabularx}
+\caption{REST API Endpoint Summary}
+\end{table}
+
+\subsection{Frontend Architecture}
+
+The frontend follows Next.js 15 App Router conventions:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \texttt{/} --- Landing page.
+  \item \texttt{/login}, \texttt{/signup} --- Authentication flows.
+  \item \texttt{/chat} --- New conversation entry point.
+  \item \texttt{/chat/[id]} --- Existing conversation with full message history.
+  \item \texttt{/dashboard} --- Navigation hub.
+  \item \texttt{/dashboard/chats} --- All conversations.
+  \item \texttt{/dashboard/itineraries} --- Saved trip itineraries.
+  \item \texttt{/dashboard/settings} --- User profile and preferences.
+\end{itemize}
+
+% ============================================================
+\section{Implementation}
+% ============================================================
+
+\subsection{Technology Stack}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+  \hline
+  \textbf{Layer} & \textbf{Technology} & \textbf{Notes} \\
+  \hline
+  Frontend Framework     & Next.js 15                  & App Router, RSC \\
+  \hline
+  Frontend Language      & TypeScript 5.x              & Strict mode \\
+  \hline
+  UI Library             & Radix UI + Tailwind CSS v4  & Accessible primitives \\
+  \hline
+  State Management       & TanStack React Query v5     & Server-state management \\
+  \hline
+  Backend Framework      & FastAPI                     & Async, Pydantic v2 \\
+  \hline
+  Backend Language       & Python 3.11+                & \\
+  \hline
+  AI Orchestration       & LangGraph 1.0+              & StateGraph, conditional edges \\
+  \hline
+  LLM                    & Google Gemini 2.5 Flash     & \texttt{google-genai} SDK \\
+  \hline
+  Embeddings             & Gemini embedding-001        & 768 dimensions \\
+  \hline
+  Agent Framework        & LangChain 0.352+            & Tools, ReAct prebuilt \\
+  \hline
+  Database               & Supabase PostgreSQL 15      & pgvector extension \\
+  \hline
+  Cache                  & Redis 5.0+                  & Embeddings + context \\
+  \hline
+  Auth                   & Supabase Auth               & JWT, OAuth \\
+  \hline
+  Flight Data            & SerpApi Google Flights      & REST JSON, 250 free/month \\
+  \hline
+  Hotel Data             & liteAPI v3.0                & Sandbox environment \\
+  \hline
+  Payments               & Stripe                      & Sandbox mode \\
+  \hline
+  Deployment             & Vercel (frontend)           & Railway (backend) \\
+  \hline
+\end{tabularx}
+\caption{Full Technology Stack}
+\end{table}
+
+\subsection{Backend Implementation}
+
+\subsubsection{Application Configuration}
+
+All settings are managed via Pydantic \texttt{BaseSettings} in \texttt{config.py}, which reads from environment variables. Key settings include \texttt{GOOGLE\_API\_KEY}, \texttt{SERPAPI\_KEY}, \texttt{LITEAPI\_KEY}, \texttt{SUPABASE\_URL}, \texttt{SUPABASE\_KEY}, and \texttt{REDIS\_URL}. The FastAPI app is configured with CORS middleware, SSE support via \texttt{StreamingResponse}, and router registration across all resource domains.
+
+\subsubsection{Streaming Chat Endpoint}
+
+The core chat endpoint in \texttt{routers/chat\_stream.py} accepts a user message, builds the initial \texttt{AgentState} with RAG context, and returns a \texttt{StreamingResponse} running the LangGraph orchestrator as an async generator:
+
+\begin{lstlisting}[language=Python, caption=SSE Streaming Endpoint]
+@router.post("/stream")
+async def stream_chat(
+    request:      ChatRequest,
+    current_user: User = Depends(get_current_user)
+) -> StreamingResponse:
+
+    async def event_generator():
+        rag_context = await rag_service.build_context(
+            request.message, current_user.id
+        )
+        state = build_initial_state(request, rag_context, current_user)
+
+        async for event in orchestrator.astream_events(state, version="v2"):
+            etype = event["event"]
+            if etype == "on_chat_model_stream":
+                chunk = event["data"]["chunk"].content
+                yield f"data: {json.dumps({'type':'content','data':chunk})}\n\n"
+            elif etype == "on_chain_start":
+                name = event.get("name","")
+                yield f"data: {json.dumps({'type':'agent_start','agent':name})}\n\n"
+            elif etype == "on_tool_start":
+                tool  = event.get("name","")
+                yield f"data: {json.dumps({'type':'tool_call','tool':tool})}\n\n"
+
+        yield 'data: {"type":"done"}\n\n'
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+\end{lstlisting}
+
+\subsubsection{RAG Service}
+
+The RAG service (\texttt{services/rag\_service.py}) implements a two-step pipeline:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.3em]
+  \item Embed the user query with \texttt{models/gemini-embedding-001} (768 dims). Check Redis cache first (24-hour TTL).
+  \item Run a pgvector cosine similarity search over \texttt{travel\_guides} (threshold 0.5) and the user's \texttt{preference\_embedding}.
+  \item Concatenate retrieved chunks into a context string injected into the agent's system prompt.
+\end{enumerate}
+
+Embedding results are cached for 24 hours; full context strings for 5 minutes. This reduces Gemini API cost by approximately 60\% for repeated destinations.
+
+\subsubsection{Resilience Patterns}
+
+Both \texttt{DatabaseService} (Supabase) and \texttt{RedisService} implement a circuit breaker: after three consecutive failures the service enters an open state and requests fall through to a \texttt{MemoryFallbackService}. This ensures the system degrades gracefully rather than failing completely when external dependencies are unavailable. All failures are recorded in structured logs via Python's \texttt{structlog}.
+
+\subsection{Frontend Implementation}
+
+\subsubsection{State-of-the-Art Chat Interface}
+
+The chat interface (\texttt{/chat} and \texttt{/chat/[id]}) is designed to match the quality bar set by leading AI assistant products such as ChatGPT and Claude. Key characteristics:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{Streaming with cursor animation:} Text streams token-by-token with a blinking cursor, giving the user immediate visual feedback that the agent is actively working.
+  \item \textbf{Agent activity indicators:} During a response, a real-time banner shows which agent is active (e.g., ``Flight Agent searching\ldots'') and which tool is being called (e.g., ``Calling search\_flights'').
+  \item \textbf{Conversation sidebar:} A collapsible left panel lists all previous conversations with auto-generated titles and timestamps, enabling instant navigation between sessions.
+  \item \textbf{Auto-scroll with user override:} The message view auto-scrolls to the latest content but pauses if the user manually scrolls up, resuming on reaching the bottom.
+  \item \textbf{Message actions:} Each assistant message exposes copy, regenerate, and feedback actions on hover.
+  \item \textbf{Keyboard shortcuts:} \texttt{Enter} submits, \texttt{Shift+Enter} inserts a newline; \texttt{Ctrl+K} focuses the input from anywhere.
+  \item \textbf{Dark/light mode:} Theme toggled via a system-aware default with manual override.
+  \item \textbf{Fully responsive:} Layout reflows gracefully from desktop widescreen to mobile portrait.
+\end{itemize}
+
+\subsubsection{Structured Travel Result Cards}
+
+When agents return structured flight or hotel data, the frontend renders purpose-built cards rather than plain text:
+
+\textbf{Flight Cards} display: airline logo, flight number, origin $\to$ destination, departure/arrival times, duration, stops indicator (non-stop / 1 stop), cabin class, and price in USD. A ``Select'' action button allows the user to pick the flight and continue in conversation.
+
+\textbf{Hotel Cards} display: property name, star rating (visual stars), price per night, cancellation policy badge (refundable / non-refundable), key amenities (WiFi, pool, breakfast included), a thumbnail image, and ``Book'' / ``View Details'' actions.
+
+Both card types are rendered inside \texttt{components/chat/messages/travel-cards.tsx}, which receives the structured JSON payload extracted from the agent's response by the content parser.
+
+\subsubsection{Content Parts Parser}
+
+\texttt{content-parts.tsx} determines how each segment of an agent response is rendered:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{Plain text / Markdown:} Rendered via \texttt{react-markdown} with \texttt{remark-gfm} for tables, code blocks, and formatting.
+  \item \textbf{Flight JSON:} Detected by schema shape and routed to \texttt{FlightCard}.
+  \item \textbf{Hotel JSON:} Detected and routed to \texttt{HotelCard}.
+  \item \textbf{Itinerary JSON:} Detected and rendered as a collapsible day-by-day timeline.
+  \item \textbf{Map artifact:} Triggers the side panel to render an interactive map.
+\end{itemize}
+
+\subsubsection{Side Panel and Artifact Display}
+
+The chat layout includes a collapsible right-side panel (\texttt{chat/layout.tsx}) that renders rich trip artifacts separately from the conversation thread. Agents signal artifact creation via dedicated SSE event types (\texttt{artifact\_created}). The panel can show:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item A full multi-day itinerary with collapsible day cards, activity timing, and cost breakdowns.
+  \item An interactive map (via a Maps provider) displaying the trip route, hotel pin, and activity waypoints.
+  \item A trip summary with AI-generated narrative, destination highlights, and weather context.
+  \item A booking summary card listing all confirmed reservations with total cost.
+\end{itemize}
+
+\subsubsection{Itinerary Dashboard}
+
+The \texttt{/dashboard/itineraries} page displays all saved trips as cards with destination imagery, travel dates, trip type badge, and status indicator (planning / confirmed / completed). Selecting a trip opens a full detail view with the day-by-day plan, linked bookings, and action buttons for re-planning or exporting.
+
+\subsubsection{Chat Streaming Hook}
+
+The \texttt{useChatStream} custom hook (\texttt{hooks/use-chat-stream.ts}) manages the SSE connection lifecycle:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.3em]
+  \item Opens a \texttt{fetch} stream to the chat endpoint with \texttt{ReadableStream}.
+  \item Parses newline-delimited JSON events by \texttt{type} field.
+  \item Updates \texttt{currentMessage}, \texttt{currentAgent}, \texttt{isStreaming}, and \texttt{messages} state.
+  \item Parses embedded JSON artifacts and triggers side-panel updates via a shared context.
+  \item Appends the completed message on receipt of a \texttt{done} event.
+  \item Handles network errors with exponential back-off retry.
+\end{enumerate}
+
+\subsubsection{Authentication}
+
+Authentication uses Supabase Auth. A custom \texttt{useAuth()} hook wraps \texttt{onAuthStateChange}, keeps the current session in React context, and exposes \texttt{signIn}, \texttt{signOut}, and \texttt{signUp} methods. Protected routes check session state and redirect to \texttt{/login} if unauthenticated.
+
+\subsection{Key Implementation Decisions}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Gemini 2.5 Flash over GPT-4:} Generous free tier suitable for an academic project; native LangChain bindings; integrated embedding API on the same key.
+  \item \textbf{LangGraph over AutoGen:} First-class \texttt{astream\_events} SSE streaming support; stateful \texttt{StateGraph} with typed conditional routing; active open-source community.
+  \item \textbf{SerpApi for Flights:} Wraps Google Flights with a permissive free tier, clean structured JSON, and a Python SDK. No enterprise contracting required.
+  \item \textbf{liteAPI for Hotels:} Sandbox environment provides realistic hotel data without requiring production credentials. v3.0 API covers search, rates, pre-book, and book in a single integration.
+  \item \textbf{SSE over WebSockets:} Simpler to proxy through standard HTTP infrastructure; sufficient for the unidirectional streaming use case; no persistent connection management.
+  \item \textbf{Supabase over self-hosted Postgres:} Managed auth, real-time subscriptions, and pgvector extension pre-installed; dramatically reduces infrastructure overhead for a team FYP.
+\end{itemize}
+
+% ============================================================
+\section{Completed Feature Highlights}
+% ============================================================
+
+This section presents the three major feature deliverables completed in Orbis AI FYP-II, each representing a distinct technical contribution beyond a conventional travel search application.
+
+\subsection{Intelligent Multi-Agent Travel Planning System}
+
+\begin{highlightbox}[Contribution Summary]
+Specialised AI agents collaboratively generate optimised, personalised travel plans. Each agent owns a specific domain (flights, hotels, itinerary) and cooperates through a centralised LangGraph orchestration graph with a shared state. An adaptive scoring mechanism progressively improves recommendations based on user feedback and travel history.
+\end{highlightbox}
+
+\subsubsection{Architecture}
+
+The system comprises six specialised agents deployed as nodes in a LangGraph \texttt{StateGraph}:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Flight Agent} --- Searches and evaluates flight options via SerpApi Google Flights. Considers departure time, layover duration, price-to-duration trade-offs, and user's preferred airlines from their profile.
+  \item \textbf{Hotel Agent} --- Selects accommodations via liteAPI, scoring options by location proximity to planned activities, price against budget envelope, guest ratings, and amenity match to user preferences (e.g., halal food nearby, pool required).
+  \item \textbf{Planner Agent} --- The high-level coordinator within the agentic pipeline. It decomposes a user's natural language request into structured entities (destinations, dates, budget, traveller count, trip type) and orchestrates the sequence of agent calls.
+  \item \textbf{Itinerary Agent} --- Synthesises flight, hotel, and activity data into a coherent day-by-day plan. Applies constraint satisfaction to ensure feasibility (transit times, opening hours, weather windows) and runs the adaptive scoring model.
+  \item \textbf{Booking Agent} --- Manages the transition from a selected plan to confirmed reservations, creating database records and initiating payment flows.
+  \item \textbf{Verifier Agent} --- Performs a final consistency check on any booking action: validates dates do not overlap, budget is not exceeded, and all required fields are present before committing.
+\end{itemize}
+
+\subsubsection{Adaptive Scoring}
+
+Rather than relying solely on static rules, the Itinerary Agent applies a lightweight scoring function to rank competing plan configurations:
+
+\begin{equation}
+  S = w_1 \cdot \text{BudgetScore} + w_2 \cdot \text{RatingScore} + w_3 \cdot \text{ConvenienceScore} + w_4 \cdot \text{PreferenceScore}
+\end{equation}
+
+Weights $w_1\ldots w_4$ are initialised from the user's profile and adjusted over time as the user accepts or rejects suggestions. This moves the system from static rule-based planning toward adaptive AI-assisted trip planning without requiring a full reinforcement learning training loop.
+
+\subsubsection{Agent Cooperation}
+
+Agents share the common \texttt{AgentState} TypedDict across LangGraph edges. When the Flight Agent returns structured flight JSON, the Itinerary Agent reads it from the shared state and builds the day-by-day plan around the confirmed departure/arrival times. This tight state coupling avoids redundant API calls and ensures all agents operate on a consistent, up-to-date view of the trip.
+
+\subsection{AI-Powered Multi-Modal Trip Summariser}
+
+\begin{highlightbox}[Contribution Summary]
+An LLM-powered pipeline converts structured itinerary JSON into rich, visually annotated trip summaries combining natural language narrative, interactive maps, landmark imagery, weather context, and estimated travel times. Users receive a presentation-quality overview instead of a plain text schedule.
+\end{highlightbox}
+
+\subsubsection{Pipeline}
+
+The multi-modal summariser operates as follows:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Narrative generation:} The itinerary JSONB (days, activities, hotels, flights) is serialised and passed to Gemini 2.5 Flash with a summarisation prompt. The LLM generates a natural language trip narrative highlighting key experiences, transition logistics, and practical tips.
+  \item \textbf{Map rendering:} Destination coordinates (extracted from hotel and activity records) are passed to a Maps integration. The frontend renders an interactive route map with pins for: departure airport, destination airport, hotel location, and each activity waypoint. The map is embedded directly in the side panel.
+  \item \textbf{Landmark and image integration:} Using SerpApi's Google Images or knowledge panel lookups, the system retrieves representative images for major attractions in the itinerary. These are displayed as a visual gallery alongside each day's activities.
+  \item \textbf{Weather overlay:} Destination weather data (temperature range, conditions) for the travel dates is retrieved via a weather API and overlaid on the day cards, allowing users to plan appropriate clothing and activities.
+  \item \textbf{Travel time annotations:} Estimated transit times between activity locations are computed and displayed on the day timeline, making the schedule realistic and actionable.
+\end{enumerate}
+
+\subsubsection{Output Format}
+
+The summariser produces a structured artifact object emitted via SSE:
+
+\begin{lstlisting}[language=Python, caption=Multi-Modal Summary Artifact Structure]
+{
+  "type":      "trip_summary",
+  "narrative": "Your 5-day Paris adventure begins with...",
+  "days": [
+    {
+      "date":       "2025-12-01",
+      "activities": [...],
+      "hotel":      {...},
+      "weather":    {"high": 12, "low": 5, "condition": "Partly Cloudy"},
+      "travel_times": {"hotel_to_eiffel_tower": "15 min walk"}
+    }
+  ],
+  "map_waypoints": [{"lat": 48.8566, "lng": 2.3522, "label": "Hotel"}],
+  "images":    [{"url": "...", "caption": "Eiffel Tower"}],
+  "total_cost": 2340.00
+}
+\end{lstlisting}
+
+The frontend's content parser detects this artifact type and renders it in the side panel as a visually rich, interactive trip overview.
+
+\subsection{Real-Time Constraint Optimisation and Dynamic Re-Planning}
+
+\begin{highlightbox}[Contribution Summary]
+A constraint satisfaction and heuristic optimisation engine dynamically adjusts travel plans when conditions change. Budget modifications, flight delays, and hotel unavailability trigger automatic re-planning. The engine balances cost, timing, travel distance, and user preferences using heuristic scoring and constraint propagation.
+\end{highlightbox}
+
+\subsubsection{Constraint Model}
+
+The itinerary planner models a trip as a constraint satisfaction problem (CSP) with the following variable types:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{Time windows:} Each activity has an earliest start and latest end time. Hotel check-in/check-out impose hard constraints on accommodation selection. Flights impose hard constraints on the first and last day's schedule.
+  \item \textbf{Budget envelope:} The sum of all selected flight prices, hotel costs, and activity fees must not exceed the user's stated budget. Each component is assigned a budget fraction based on the trip type (leisure vs.\ adventure vs.\ luxury).
+  \item \textbf{Sequential feasibility:} Transit time between consecutive activities must be feasible given opening hours, closing times, and realistic travel durations.
+  \item \textbf{Preference constraints:} Soft constraints encode user preferences (e.g., no early morning flights, hotel within 2 km of city centre, vegetarian restaurant options).
+\end{itemize}
+
+\subsubsection{Re-Planning Triggers}
+
+Dynamic re-planning is triggered by:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{Budget modification:} User says ``reduce the budget by \$300''. The engine recomputes the budget envelope and identifies the minimum-regret substitutions (typically downgrading hotel tier or selecting a connecting flight over a direct one).
+  \item \textbf{Date shift:} User says ``push the departure back by 2 days''. The engine propagates the change through all time-window constraints and re-queries flight and hotel APIs for the new dates.
+  \item \textbf{Preference change:} User adds a constraint mid-conversation (``I need halal food options''). Soft constraints are updated and activities/hotels are rescored accordingly.
+  \item \textbf{Availability loss:} A selected hotel or flight becomes unavailable (detected during pre-booking). The engine automatically identifies the next-best alternative and presents it for confirmation.
+\end{enumerate}
+
+\subsubsection{Optimisation Approach}
+
+The engine applies a greedy heuristic search with local improvement steps:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{Greedy initial assignment:} Assign the highest-scoring feasible flight and hotel given the current constraints.
+  \item \textbf{Activity scheduling:} Insert activities into available time slots using a greedy earliest-deadline-first strategy.
+  \item \textbf{Local improvement:} Apply 2-opt swaps on the activity order within each day to minimise total transit distance.
+  \item \textbf{Constraint propagation:} After any change, propagate constraint impacts forward through the schedule to detect and resolve newly infeasible assignments.
+\end{enumerate}
+
+This approach delivers near-optimal results within the sub-second response time required for interactive re-planning, without requiring a full ILP solve for every query. The architecture is designed for future integration with Google OR-Tools' CP-SAT solver for more complex multi-city and multi-leg routing scenarios.
+
+% ============================================================
+\section{Testing and Evaluation}
+% ============================================================
+
+\subsection{Testing Strategy}
+
+Testing was organised into three levels: unit testing of individual tools and services; integration testing of agent pipelines; and manual end-to-end system testing through the chat interface.
+
+\subsection{Unit Tests}
+
+Unit tests are located in \texttt{apps/api/tests/}:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \texttt{test\_intent\_routing.py} --- Validates that the orchestrator maps a representative set of 20 user queries to the correct agent type. Covers flight, hotel, itinerary, booking, and planning intents.
+  \item \texttt{test\_rag\_service.py} --- Verifies that the RAG pipeline retrieves semantically relevant travel guide entries for a sample query and that Redis caching is applied correctly on subsequent calls.
+  \item \texttt{test\_tool\_logging.py} --- Confirms that tool call records are written to the \texttt{tool\_calls} table with correct fields after a flight or hotel tool is invoked.
+\end{itemize}
+
+\subsection{Integration Testing}
+
+\texttt{tests/manual/test\_booking\_flow\_asserts.py} exercises the full booking flow end-to-end:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.2em]
+  \item User authenticates and starts a new conversation.
+  \item A trip planning message is sent to the chat stream endpoint.
+  \item The response is validated for structured flight or hotel result JSON.
+  \item A booking creation call is made and the resulting record is verified in the database.
+  \item The trip summary endpoint confirms the booking appears under the trip.
+\end{enumerate}
+
+\subsection{Manual System Testing}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|X|l|p{4.5cm}|}
+  \hline
+  \textbf{Scenario} & \textbf{Result} & \textbf{Notes} \\
+  \hline
+  Single-city flight search              & Pass    & Correct IATA mapping; flight cards rendered \\
+  \hline
+  Multi-turn itinerary refinement        & Pass    & Conversation history correctly injected \\
+  \hline
+  Hotel search and pre-booking           & Pass    & liteAPI sandbox returns valid offer IDs \\
+  \hline
+  Dynamic re-planning on budget change   & Pass    & Updated itinerary returned in under 3 s \\
+  \hline
+  Multi-modal summary generation         & Pass    & Narrative + map waypoints emitted via SSE \\
+  \hline
+  Intent misclassification recovery      & Partial & Fallback to raw Gemini response \\
+  \hline
+  RAG context injection                  & Pass    & Relevant guide excerpts in agent reasoning \\
+  \hline
+  SSE streaming stability                & Pass    & No dropped chunks in 50-message session \\
+  \hline
+  Redis cache miss / circuit breaker     & Pass    & In-memory fallback serves requests \\
+  \hline
+  Adaptive scoring on second query       & Pass    & Preferred airline surfaced higher \\
+  \hline
+  Constraint violation detection         & Pass    & Budget exceed caught before confirmation \\
+  \hline
+  Conversation title auto-generation     & Pass    & Title generated after second exchange \\
+  \hline
+\end{tabularx}
+\caption{Manual System Test Results}
+\end{table}
+
+\subsection{Performance Observations}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{First token latency:} 1.5--2.5 seconds from submission, dominated by Gemini API call.
+  \item \textbf{Flight search (SerpApi):} 2--4 seconds per query.
+  \item \textbf{Hotel search (liteAPI):} 1--3 seconds per query.
+  \item \textbf{RAG embedding:} 300--500 ms per query; Redis cache hit under 5 ms.
+  \item \textbf{Full planning response:} 8--15 seconds end-to-end, delivered incrementally via streaming.
+  \item \textbf{Dynamic re-planning:} Under 3 seconds for constraint propagation and hotel/flight re-ranking.
+  \item \textbf{Multi-modal summary:} 4--7 seconds for LLM narrative generation + map waypoint assembly.
+\end{itemize}
+
+\subsection{Limitations}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{SerpApi free tier:} 250 searches per month limits sustained demo use.
+  \item \textbf{liteAPI sandbox:} Hotel availability data is synthetic; production API credentials are required for real confirmation flows.
+  \item \textbf{Gemini rate limits:} Sustained multi-user load may encounter free-tier rate limits.
+  \item \textbf{Complex multi-constraint queries:} Multi-city trips with strict budget and layover constraints occasionally require multiple conversational turns to fully resolve.
+  \item \textbf{Weather API:} Currently integrated with a lightweight free-tier weather provider; precipitation probability and hourly forecasts require a premium key.
+\end{itemize}
+
+% ============================================================
+\section{Future Work}
+% ============================================================
+
+\subsection{Federated Preference Learning}
+
+\begin{highlightbox}[Research Direction]
+Explore privacy-preserving personalisation where preference learning occurs locally on-device before syncing anonymised updates, using federated learning techniques with differential privacy guarantees.
+\end{highlightbox}
+
+The current Orbis AI personalisation model stores user preference embeddings centrally in Supabase. While this is effective, it requires users to trust the platform with their travel history and behavioural data. A federated learning extension would address this by:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Local model training:} Each user's device maintains a local preference model updated from their interactions without raw data leaving the device.
+  \item \textbf{Differential privacy:} Gaussian noise is added to local gradient updates before aggregation, providing $(\varepsilon, \delta)$-differential privacy guarantees.
+  \item \textbf{Secure aggregation:} A federated server aggregates encrypted model deltas using a protocol such as SecAgg, updating a global preference prior without accessing any individual's data.
+  \item \textbf{Personalised global model:} The aggregated global model serves as a prior for new users (cold-start), while established users retain their locally adapted version.
+\end{itemize}
+
+This direction is particularly relevant given increasing regulatory pressure (GDPR, Pakistan PECA amendments) around personal data processing. It also opens research possibilities in federated embeddings for semantic personalisation, where user preference vectors are maintained locally and only similarity scores (not raw vectors) are shared with the server for RAG retrieval.
+
+\subsection{Autonomous Negotiation Agents}
+
+\begin{highlightbox}[Research Direction]
+Experimental agents capable of simulating price negotiation strategies with vendors or mock booking systems, using game-theoretic reasoning and dynamic pricing models to autonomously optimise deal outcomes.
+\end{highlightbox}
+
+Current Orbis AI agents are consumers of travel APIs: they query prices and present options to users. A negotiation agent extension would make agents active participants in the pricing process:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Dynamic pricing simulation:} A mock vendor environment models realistic price elasticity curves for flights and hotels based on demand, seasonality, and booking lead time. The negotiation agent explores this space to find price points below the user's willingness-to-pay threshold.
+  \item \textbf{Game-theoretic strategies:} The agent applies strategies from mechanism design --- such as take-it-or-leave-it offers, sequential bargaining, and auction-based bidding --- to model multi-round negotiation with vendor agents.
+  \item \textbf{Multi-agent negotiation:} Multiple Orbis AI instances representing different traveller profiles could simulate competitive negotiation scenarios, providing training data for the negotiation policy via self-play.
+  \item \textbf{Policy learning:} A lightweight policy gradient method (e.g., REINFORCE) trains the negotiation agent on simulated vendor interactions, with reward defined as (user-stated budget $-$ final price) subject to acceptability constraints.
+  \item \textbf{Commercial extension:} In a production setting, this could evolve toward autonomous deal-making with airline APIs, loyalty programme partners, or hotel chains that expose dynamic pricing endpoints.
+\end{itemize}
+
+\subsection{Google OR-Tools Integration}
+
+The current constraint optimisation engine uses greedy heuristic search. A natural evolution is direct integration with \textbf{Google OR-Tools CP-SAT solver} for provably optimal itinerary scheduling. OR-Tools offers:
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item Integer linear programming for budget allocation across trip components.
+  \item Vehicle routing for multi-city tour optimisation (minimise total transit cost).
+  \item Scheduling solvers for activity ordering with time-window constraints.
+  \item Incremental solving for efficient re-planning (warm starts from previous solution).
+\end{itemize}
+
+\subsection{Full Payment and Notification Pipeline}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.3em]
+  \item \textbf{Stripe production integration:} Real payment confirmation, receipts, and refund workflows.
+  \item \textbf{Email notifications:} Booking confirmation emails and trip reminder sequences via Resend or SendGrid.
+  \item \textbf{ICS calendar export:} Downloadable \texttt{.ics} files generated from confirmed itineraries for calendar integration.
+  \item \textbf{Push notifications:} Flight delay alerts and hotel check-in reminders via web push.
+\end{itemize}
+
+\subsection{Admin Observability Dashboard}
+
+A frontend admin dashboard would visualise: agent run logs by type and outcome, token usage and cost tracking per conversation, error rate time-series, tool call success rates by provider (SerpApi, liteAPI), and user cohort analytics. This is partially implemented in the backend (\texttt{/api/analytics}) but lacks a frontend.
+
+\subsection{Multi-City and Complex Routing}
+
+Extending the Flight Agent to handle multi-leg, multi-city itineraries with automatic layover optimisation, alliance-aware booking, and interline connection feasibility checks.
+
+\subsection{Mobile Native Application}
+
+A React Native or Flutter client sharing the same FastAPI backend, enabling offline itinerary access, push notifications, and camera-based document capture (passport, boarding pass scanning).
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+\subsection{Summary of Contributions}
+
+Orbis AI has delivered a functional, production-oriented agentic travel planning system with the following primary contributions:
+
+\begin{enumerate}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Multi-Agent Architecture:} A LangGraph \texttt{StateGraph} orchestrating six specialised ReAct agents --- each with a focused, domain-specific tool suite --- enabling modular, maintainable, and extensible travel AI. Intent routing by a Gemini-powered Orchestrator achieves accurate agent dispatch across flight, hotel, itinerary, booking, and verification domains.
+
+  \item \textbf{Live External API Integration:} Real-time flight data from SerpApi (Google Flights) and live hotel availability from liteAPI v3.0 replace mocked responses with production-quality results, demonstrating that agentic systems can bridge user intent and real-world travel services.
+
+  \item \textbf{RAG-Based Personalisation:} Gemini-embedded user preferences and destination travel guides, stored in pgvector and retrieved semantically, inject relevant context into agent prompts without inflating the base prompt or requiring model fine-tuning.
+
+  \item \textbf{Real-Time Constraint Optimisation:} A dynamic re-planning engine handles budget changes, date shifts, and availability losses in real time, providing adaptive scheduling capabilities comparable to enterprise travel systems.
+
+  \item \textbf{AI-Powered Multi-Modal Summarisation:} An LLM-driven pipeline converts structured itinerary data into rich, visually annotated trip summaries with natural language narrative, interactive maps, landmark images, and weather overlays.
+
+  \item \textbf{State-of-the-Art Chat Interface:} A Next.js 15 frontend with SSE streaming, structured travel cards, side-panel artifact display, and a fully responsive design that matches the UX quality of leading AI assistant products.
+
+  \item \textbf{Production-Oriented Engineering:} Circuit breakers, in-memory fallbacks, structured logging, agent run tracing, Redis caching, and comprehensive observability instrumentation make the system resilient and debuggable under real-world conditions.
+\end{enumerate}
+
+\subsection{Lessons Learned}
+
+\begin{itemize}[leftmargin=1.5cm, itemsep=0.4em]
+  \item \textbf{Intent routing is foundational.} The quality of the Orchestrator's intent classification is the single most impactful factor in system usability. Ambiguous or misclassified intents cascade into irrelevant agent execution and poor user experience.
+
+  \item \textbf{Streaming is architecturally significant.} SSE streaming is not simply a UX enhancement --- it is a structural constraint that affects how the LangGraph graph emits events, how the frontend maintains React state, and how partial results are presented before completion.
+
+  \item \textbf{External API reliability is a first-class concern.} Circuit breakers, fallback paths, and graceful degradation strategies are not optional in a system whose core value depends on live third-party data.
+
+  \item \textbf{RAG context should be selective.} Retrieving too much context increases prompt token cost and can dilute relevance. Cosine distance thresholding and Redis caching were essential for keeping RAG efficient.
+
+  \item \textbf{Tool decorator patterns pay dividends.} Stacking \texttt{@tool}, \texttt{@log\_tool\_call}, and \texttt{@tool\_error\_handler} into a reusable decorator chain made every tool automatically observable and fault-tolerant, eliminating boilerplate across all twelve tool functions.
+
+  \item \textbf{Adaptive personalisation improves with iteration.} The system's value compounds over conversations: each accepted suggestion refines the scoring weights, and each rejected suggestion updates the preference profile, creating a virtuous feedback loop.
+\end{itemize}
+
+% ============================================================
+\section*{References}
+\addcontentsline{toc}{section}{References}
+% ============================================================
+
+\begin{thebibliography}{99}
+
+\bibitem{yao2022react}
+Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K., \& Cao, Y. (2022).
+\textit{ReAct: Synergizing Reasoning and Acting in Language Models}.
+arXiv preprint arXiv:2210.03629.
+
+\bibitem{lewis2020rag}
+Lewis, P., Perez, E., Piktus, A., et al. (2020).
+\textit{Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks}.
+Advances in Neural Information Processing Systems, 33, 9459--9474.
+
+\bibitem{wu2023autogen}
+Wu, Q., Bansal, G., Zhang, J., et al. (2023).
+\textit{AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation}.
+arXiv preprint arXiv:2308.08155.
+
+\bibitem{langgraph2024}
+LangChain Inc. (2024).
+\textit{LangGraph: Stateful, Multi-Actor Applications with LLMs}.
+[Online]. Available: \url{https://github.com/langchain-ai/langgraph}
+
+\bibitem{langchain}
+LangChain Inc. (2023).
+\textit{LangChain: Building Applications with LLMs}.
+[Online]. Available: \url{https://python.langchain.com}
+
+\bibitem{ortools}
+Google LLC. (2024).
+\textit{OR-Tools: Open Source Software for Combinatorial Optimization}.
+[Online]. Available: \url{https://developers.google.com/optimization}
+
+\bibitem{fastapi}
+Ram\'{i}rez, S. (2023).
+\textit{FastAPI: Modern, Fast Web Framework for Building APIs}.
+[Online]. Available: \url{https://fastapi.tiangolo.com}
+
+\bibitem{nextjs}
+Vercel Inc. (2024).
+\textit{Next.js Documentation}.
+[Online]. Available: \url{https://nextjs.org/docs}
+
+\bibitem{supabase}
+Supabase Inc. (2024).
+\textit{Supabase Documentation}.
+[Online]. Available: \url{https://supabase.com/docs}
+
+\bibitem{pgvector}
+pgvector Contributors. (2023).
+\textit{pgvector: Open-source vector similarity search for Postgres}.
+[Online]. Available: \url{https://github.com/pgvector/pgvector}
+
+\bibitem{gemini}
+Google DeepMind. (2024).
+\textit{Gemini API Documentation}.
+[Online]. Available: \url{https://ai.google.dev/docs}
+
+\bibitem{serpapi}
+SerpApi. (2024).
+\textit{Google Flights API Documentation}.
+[Online]. Available: \url{https://serpapi.com/google-flights-api}
+
+\bibitem{liteapi}
+liteAPI. (2024).
+\textit{liteAPI Hotel Booking API v3.0 Documentation}.
+[Online]. Available: \url{https://docs.liteapi.travel}
+
+\bibitem{stripe}
+Stripe Inc. (2024).
+\textit{Stripe Payment API Documentation}.
+[Online]. Available: \url{https://stripe.com/docs/api}
+
+\bibitem{skyscanner}
+Skyscanner Ltd. (2024).
+\textit{Skyscanner Travel Search}.
+[Online]. Available: \url{https://www.skyscanner.net}
+
+\bibitem{mcmahan2017federated}
+McMahan, B., Moore, E., Ramage, D., Hampson, S., \& y Arcas, B. A. (2017).
+\textit{Communication-Efficient Learning of Deep Networks from Decentralised Data}.
+Proceedings of the 20th International Conference on Artificial Intelligence and Statistics (AISTATS), 1273--1282.
+
+\bibitem{shoham2008multiagent}
+Shoham, Y., \& Leyton-Brown, K. (2008).
+\textit{Multiagent Systems: Algorithmic, Game-Theoretic, and Logical Foundations}.
+Cambridge University Press.
+
+\end{thebibliography}
+
+\end{document}

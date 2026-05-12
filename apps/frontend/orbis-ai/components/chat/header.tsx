@@ -106,8 +106,17 @@ export function ChatHeader({
         {/* Mobile Hamburger Menu */}
         <button
           onClick={() => document.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'))}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted text-foreground transition-colors lg:hidden"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted text-foreground transition-colors lg:hidden shrink-0"
           aria-label="Open chat sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Desktop Sidebar Toggle */}
+        <button
+          onClick={() => document.dispatchEvent(new CustomEvent('toggle-desktop-sidebar'))}
+          className="hidden lg:inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted text-foreground transition-colors shrink-0"
+          aria-label="Toggle chat sidebar"
         >
           <Menu className="h-5 w-5" />
         </button>

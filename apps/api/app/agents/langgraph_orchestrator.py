@@ -6,12 +6,42 @@ Uses StateGraph for agent orchestration with conditional routing.
   Orchestrator → routes to → Flight / Hotel / Planner / Itinerary / Booking / Verifier
 """
 import json
-from typing import TypedDict, Annotated, Literal
+from typing import TypedDict, Annotated, Literal, Union
 from typing_extensions import NotRequired
 
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.runnables import RunnableConfig
+
+
+def _extract_text(content: Union[str, list, None]) -> str:
+    """
+    Normalise an AIMessage.content value to a plain string.
+
+    ChatGoogleGenerativeAI (langchain-google-genai) can return content as:
+      - str  — simple text response
+      - list — list of content-part dicts when tool calls are involved,
+                e.g. [{"type": "text", "text": "Here are the flights..."}]
+
+    Concatenating a list directly to a str causes:
+        TypeError: can only concatenate str (not "list") to str
+    This helper always returns a str.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for part in content:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict):
+                # Standard content-part format: {"type": "text", "text": "..."}
+                parts.append(part.get("text") or part.get("content") or "")
+        return "".join(parts)
+    return str(content)
 
 from app.agents.base import AgentInput, AgentOutput
 from app.services.gemini import GeminiService
@@ -118,8 +148,9 @@ class LangGraphOrchestrator:
             logger.warning("No user message found in state")
             return state
         
-        # Analyze intent
-        intent_data = await self.gemini_service.analyze_intent(user_message)
+        # Analyze intent using conversation history for context
+        db_history = state.get("context", {}).get("history", [])
+        intent_data = await self.gemini_service.analyze_intent(user_message, conversation_history=db_history)
         
         state["intent"] = intent_data.get("intent", "general")
         state["entities"] = intent_data.get("entities", {})
@@ -182,31 +213,31 @@ class LangGraphOrchestrator:
         logger.warning(f"Unknown agent type, routing to end", agent_type=agent_type)
         return "end"
     
-    async def _flight_node(self, state: AgentState) -> AgentState:
+    async def _flight_node(self, state: AgentState, config: RunnableConfig) -> AgentState:
         """Flight agent node"""
-        return await self._agent_node(state, "flight")
+        return await self._agent_node(state, config, "flight")
     
-    async def _hotel_node(self, state: AgentState) -> AgentState:
+    async def _hotel_node(self, state: AgentState, config: RunnableConfig) -> AgentState:
         """Hotel agent node"""
-        return await self._agent_node(state, "hotel")
+        return await self._agent_node(state, config, "hotel")
     
-    async def _planner_node(self, state: AgentState) -> AgentState:
+    async def _planner_node(self, state: AgentState, config: RunnableConfig) -> AgentState:
         """Planner agent node"""
-        return await self._agent_node(state, "planner")
+        return await self._agent_node(state, config, "planner")
     
-    async def _itinerary_node(self, state: AgentState) -> AgentState:
+    async def _itinerary_node(self, state: AgentState, config: RunnableConfig) -> AgentState:
         """Itinerary agent node"""
-        return await self._agent_node(state, "itinerary")
+        return await self._agent_node(state, config, "itinerary")
     
-    async def _booking_node(self, state: AgentState) -> AgentState:
+    async def _booking_node(self, state: AgentState, config: RunnableConfig) -> AgentState:
         """Booking agent node"""
-        return await self._agent_node(state, "booking")
+        return await self._agent_node(state, config, "booking")
 
-    async def _verifier_node(self, state: AgentState) -> AgentState:
+    async def _verifier_node(self, state: AgentState, config: RunnableConfig) -> AgentState:
         """Verifier agent — validates trip plans, checks date consistency, budget compliance."""
-        return await self._agent_node(state, "verifier")
+        return await self._agent_node(state, config, "verifier")
     
-    async def _agent_node(self, state: AgentState, agent_type: str) -> AgentState:
+    async def _agent_node(self, state: AgentState, config: RunnableConfig, agent_type: str) -> AgentState:
         """
         Generic agent node executor using ReAct (tool-calling) agents.
 
@@ -274,21 +305,25 @@ class LangGraphOrchestrator:
             pass  # Don't fail the request if logging fails
 
         try:
-            react_agent = build_react_agent(agent_type)
-            result = await react_agent.ainvoke({"messages": lc_messages})
+            user_id = state.get("context", {}).get("user_id")
+            react_agent = build_react_agent(agent_type, user_id=user_id)
+            result = await react_agent.ainvoke({"messages": lc_messages}, config=config)
             duration = time.time() - start_time
 
-            # Extract final AI response (last AIMessage in result)
+            # Extract final AI response (last AIMessage in result).
+            # Use _extract_text() because content may be a list of parts
+            # when the model performed tool calls (ChatGoogleGenerativeAI quirk).
             response = ""
             for msg in reversed(result.get("messages", [])):
                 if isinstance(msg, LCAi) and msg.content:
-                    response = msg.content
+                    response = _extract_text(msg.content)
                     break
 
             if not response:
-                # Fallback: concatenate all AI messages
+                # Fallback: join all AI message texts
                 response = " ".join(
-                    m.content for m in result.get("messages", [])
+                    _extract_text(m.content)
+                    for m in result.get("messages", [])
                     if isinstance(m, LCAi) and m.content
                 )
 
@@ -416,18 +451,9 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
     ):
         """
         Stream responses using LangGraph graph execution.
-
-        Uses astream() to get the completed state from each node, then streams
-        the response content to the caller. GeminiService uses the raw Gemini SDK
-        (not a LangChain ChatModel), so on_chat_model_stream events never fire —
-        therefore we extract the full response from the state after the node
-        completes and chunk it for the SSE consumer.
-
-        Yields dicts with keys:
-          - type: "agent_start" | "content" | "agent_end" | "done"
         """
+        import time as _t
         AGENT_NODES = {"flight", "hotel", "planner", "itinerary", "booking", "verifier"}
-        CHUNK_SIZE = 50  # characters per SSE event
 
         initial_state = AgentState(
             messages=[HumanMessage(content=user_message)],
@@ -435,28 +461,63 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
             conversation_id=conversation_id,
         )
 
-        async for chunk in self.graph.astream(initial_state):
-            for node_name, node_output in chunk.items():
-                if node_name not in AGENT_NODES:
-                    continue
+        started_agents = set()
+        _token_n = 0
+        _t0 = _t.time()
 
-                # Announce agent
-                yield {"type": "agent_start", "agent_type": node_name}
-                logger.info(f"Agent node completed", node=node_name, conversation_id=conversation_id)
+        async for event in self.graph.astream_events(initial_state, version="v2"):
+            kind = event["event"]
+            name = event["name"]
 
-                # Extract the last AI message from the state delta
-                messages = node_output.get("messages", [])
-                ai_content = ""
-                for msg in reversed(messages):
-                    if isinstance(msg, AIMessage) and msg.content:
-                        ai_content = msg.content
-                        break
+            # Detect agent start
+            if kind == "on_chain_start" and name in AGENT_NODES and name not in started_agents:
+                started_agents.add(name)
+                yield {"type": "agent_start", "agent_type": name}
 
-                if ai_content:
-                    # Stream in chunks so the frontend can render progressively
-                    for i in range(0, len(ai_content), CHUNK_SIZE):
-                        yield {"type": "content", "content": ai_content[i:i + CHUNK_SIZE]}
+            # Detect content streaming
+            elif kind == "on_chat_model_stream":
+                chunk = event["data"]["chunk"]
+                if chunk.content:
+                    content = _extract_text(chunk.content)
+                    if content:
+                        _token_n += 1
+                        logger.info(
+                            "stream_token",
+                            n=_token_n,
+                            ms=round((_t.time() - _t0) * 1000),
+                            chars=len(content),
+                            preview=repr(content[:50]),
+                            conversation_id=conversation_id,
+                        )
+                        yield {"type": "content", "content": content}
 
-                yield {"type": "agent_end", "agent_type": node_name}
+            # Detect agent end — also rescue fallback responses.
+            # When the ReAct agent fails and the non-streaming Gemini fallback
+            # fires, no on_chat_model_stream events are emitted. The response
+            # still lands in state["messages"] so we extract it here to avoid
+            # sending an empty reply to the client.
+            elif kind == "on_chain_end" and name in AGENT_NODES:
+                if _token_n == 0:
+                    output = event.get("data", {}).get("output", {})
+                    output_msgs = output.get("messages", []) if isinstance(output, dict) else []
+                    for msg in reversed(output_msgs):
+                        if isinstance(msg, AIMessage) and msg.content:
+                            fallback_text = _extract_text(msg.content)
+                            if fallback_text:
+                                _token_n += 1
+                                logger.info(
+                                    "stream_token_fallback",
+                                    chars=len(fallback_text),
+                                    conversation_id=conversation_id,
+                                )
+                                yield {"type": "content", "content": fallback_text}
+                            break
+                yield {"type": "agent_end", "agent_type": name}
 
+        logger.info(
+            "stream_response_done",
+            total_tokens=_token_n,
+            total_ms=round((_t.time() - _t0) * 1000),
+            conversation_id=conversation_id,
+        )
         yield {"type": "done"}

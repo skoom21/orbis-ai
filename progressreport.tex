@@ -1,0 +1,154 @@
+\documentclass[12pt]{article}
+
+% ---------- Packages ----------
+\usepackage{fontspec} % Required for LuaLaTeX
+\setmainfont{Times New Roman}
+
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{ragged2e}
+
+% ---------- Formatting ----------
+\setstretch{1.5} % Line spacing
+
+% Section formatting (14pt, bold, uppercase)
+\titleformat{\section}
+  {\bfseries\fontsize{14}{16}\selectfont}
+  {\thesection}{1em}{\MakeUppercase}
+
+% Subsection formatting (12pt, bold, uppercase)
+\titleformat{\subsection}
+  {\bfseries\fontsize{12}{14}\selectfont}
+  {\thesubsection}{1em}{\MakeUppercase}
+
+% ---------- Document ----------
+\begin{document}
+
+% ---------- Title Page ----------
+\begin{center}
+    {\fontsize{16}{18}\selectfont \textbf{CS/AI/CY/SE4092}}\\[1.5em]
+
+    {\fontsize{18}{20}\selectfont \textbf{Final Year Project}}\\[1em]
+
+    {\fontsize{16}{18}\selectfont \textbf{Orbis AI}}\\[0.5em]
+    {\fontsize{13}{15}\selectfont \textbf{FYP ID: SP-88}}\\[2em]
+
+    {\fontsize{14}{16}\selectfont \textbf{Submitted By}}\\[1em]
+
+    M. Talha Yousif (Leader) \hspace{1em} 22K-5146\\
+    Salik Ahmed Bhatti \hspace{1em} 22K-5114\\
+    Toheed Ali \hspace{1em} 22K-4027\\[2em]
+
+    {\fontsize{16}{18}\selectfont \textbf{Project Progress Report}}\\[2em]
+
+    Department of Computer Science\\
+    National University of Computer and Emerging Sciences\\
+    FAST Karachi Campus
+\end{center}
+
+\vspace{2em}
+
+\begin{center}
+\textbf{Project Group Members}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{tabular}{|c|c|p{3.5cm}|c|p{3.5cm}|c|}
+\hline
+\textbf{Sr.\#} & \textbf{Reg. \#} & \textbf{Student Name} & \textbf{CGPA} & \textbf{Email ID} & \textbf{Phone \#} \\
+\hline
+(i) & 22K-5146 & M. Talha Yousif (Leader) & 2.76 & k225146@nu.edu.pk & 03164201069 \\[0.8cm]
+\hline
+(ii) & 22K-5114 & Salik Ahmed Bhatti & 2.26 & k5114@nu.edu.pk & 0322332833 \\[0.8cm]
+\hline
+(iii) & 22K-4027 & Toheed Ali & 2.16 & k224027@nu.edu.pk & 03043390057 \\[0.8cm]
+\hline
+\end{tabular}
+
+\vspace{1.5em}
+
+% ---------- Sections ----------
+
+\section{Introduction}
+\justifying
+Orbis AI is an intelligent travel planning and booking assistant that combines conversational AI, retrieval-augmented generation (RAG), and task-specific agent workflows to help users plan end-to-end trips. The project objective is to move beyond simple chatbot interactions and provide practical travel support including itinerary planning, contextual recommendations, and booking-related actions through a unified interface.
+
+The system is built around a FastAPI backend with LangGraph-based orchestration, Supabase for persistence, Redis caching, and a Next.js frontend for interactive chat. A major focus of this phase is strengthening system reliability and response quality by improving intent routing, adding conversation-aware context, and introducing structured agent tooling for flights, hotels, trips, and database operations.
+
+Our recent improvements also include a significantly enhanced chat interface that supports real-time server-sent event (SSE) streaming, better message rendering, side-panel artifacts, and smoother user interactions. These upgrades make the product closer to a production-ready travel companion instead of a prototype.
+
+\section{Timeline}
+The high-level timeline from FYP Part 1 final to current progress is as follows:
+\begin{itemize}
+    \item \textbf{Phase 1 (Foundation):} Requirements finalization, architecture design, technology stack selection, and initial UI wireframes.
+    \item \textbf{Phase 2 (Core Backend):} FastAPI setup, Supabase integration, authentication modules, conversation/message CRUD, and initial agent orchestration.
+    \item \textbf{Phase 3 (Intelligence Layer):} LangGraph workflow improvements, intent routing expansion, RAG pipeline implementation, and embedding-based context retrieval.
+    \item \textbf{Phase 4 (Product Refinement):} Chat interface improvements, streaming stability, additional routers (payments, analytics, notifications), and observability enhancements.
+\end{itemize}
+
+\section{Progress}
+Current progress is mapped to milestone-driven development and shows strong advancement in backend capability, frontend usability, and overall system integration.
+
+\subsection{Milestone 1 Progress}
+Milestone 1 focused on core platform setup and baseline functionality. The following items were completed:
+\begin{itemize}
+    \item FastAPI server configured with CORS and SSE support.
+    \item Supabase database connected with service-role access and data persistence.
+    \item Authentication flows completed (register, login, refresh, profile).
+    \item Conversation and message CRUD endpoints completed.
+    \item Basic chat streaming endpoint created and integrated.
+\end{itemize}
+
+\subsection{Milestone 2 Progress}
+Milestone 2 emphasized intelligence and orchestration quality:
+\begin{itemize}
+    \item LangGraph-based multi-node flow stabilized (orchestrator, planner, flight, hotel, itinerary, booking, verifier).
+    \item Intent routing expanded to cover 20+ intent variants.
+    \item Conversation history and date-awareness injected into system prompts.
+    \item RAG pipeline integrated using embeddings and travel guide retrieval.
+    \item Agent tooling definitions completed and integrated with ReAct-compatible workflow.
+\end{itemize}
+
+In this milestone, the system moved from static responses to context-aware travel assistance with significantly improved relevance and structured reasoning.
+
+\subsection{Milestone 3 Progress}
+Milestone 3 addressed product maturity, observability, and frontend experience:
+\begin{itemize}
+    \item Added new backend routers for payments, notifications, analytics, and agent feedback logging.
+    \item Improved reliability through better conversation handling and cache behavior.
+    \item Added automatic conversation title generation after early user-assistant exchanges.
+    \item Enhanced chat interface with:
+    \begin{itemize}
+        \item smoother real-time streaming in the conversation view,
+        \item improved message rendering/content parts handling,
+        \item upgraded chat header and message view components,
+        \item travel card and side-panel artifact presentation for richer UX.
+    \end{itemize}
+\end{itemize}
+
+Overall, this milestone delivered significant frontend polish while preserving backend scalability and maintainability.
+
+\section{Updated Timeline}
+The updated timeline from proposal to expected completion is:
+\begin{itemize}
+    \item \textbf{Proposal \& Planning:} Problem definition, objectives, and architecture approval.
+    \item \textbf{Implementation Sprint 1:} Backend/API foundation, auth, and database operations.
+    \item \textbf{Implementation Sprint 2:} Agent orchestration, intent routing, and RAG integration.
+    \item \textbf{Implementation Sprint 3:} Chat interface improvements, observability, and user experience refinement.
+    \item \textbf{Remaining Work Before Final Completion:} Live external API credentials integration (Amadeus, hotel provider, Stripe), tool-call logging completion, timeout hardening, and comprehensive testing.
+\end{itemize}
+
+This updated timeline reflects a substantial completion level, with remaining tasks primarily focused on production readiness and validation.
+
+\section*{References}
+\begin{itemize}
+    \item Orbis AI Internal Status Report, April 13, 2026.
+    \item FastAPI Documentation. \textit{https://fastapi.tiangolo.com/}
+    \item LangGraph and LangChain Documentation. \textit{https://python.langchain.com/}
+    \item Supabase Documentation. \textit{https://supabase.com/docs}
+    \item Next.js Documentation. \textit{https://nextjs.org/docs}
+\end{itemize}
+
+\end{document}

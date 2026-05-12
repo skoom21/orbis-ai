@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     API_PORT: int = Field(default=8000, description="API port")
     SECRET_KEY: str = Field(default="dev-secret-key", description="Secret key for JWT")
     ALLOWED_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+        default=[
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "https://orbis-ai-pi.vercel.app",
+        ],
         description="Allowed CORS origins"
     )
     
@@ -33,7 +37,7 @@ class Settings(BaseSettings):
     
     # Google Gemini Configuration
     GOOGLE_API_KEY: str = Field(default="", description="Google AI API key")
-    GEMINI_MODEL: str = Field(default="gemini-2.0-flash-exp", description="Gemini model name")
+    GEMINI_MODEL: str = Field(default="gemini-2.5-flash", description="Gemini model name")
     GEMINI_EMBEDDING_MODEL: str = Field(
         default="models/gemini-embedding-001",
         description="Gemini embedding model"

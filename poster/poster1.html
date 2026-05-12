@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Orbis AI – Template Match Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 900px;
+    background: #fff;
+    font-family: 'Open Sans', sans-serif;
+    color: #111;
+    line-height: 1.45;
+  }
+
+  .poster {
+    width: 900px;
+    height: 1350px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #ddd;
+  }
+
+  /* ── TITLE BANNER ── */
+  .title-banner {
+    background: #fff;
+    padding: 16px 28px 14px;
+    border-bottom: 3px solid #1a5276;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .title-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex: 1;
+  }
+  .title-banner-logo {
+    height: 60px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  .title-banner-divider {
+    width: 2px;
+    height: 80px;
+    background: #1a5276;
+    flex-shrink: 0;
+    opacity: 0.25;
+  }
+  .title-banner-text { line-height: 1; }
+  .title-banner h1 {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.15;
+  }
+  .title-banner h1 span { color: #e8522a; }
+  .title-banner .subtitle {
+    font-size: 11.5px;
+    color: #555;
+    font-style: italic;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+  .title-banner-badge {
+    flex-shrink: 0;
+    text-align: right;
+    border-left: 1px solid #e0e0e0;
+    padding-left: 18px;
+  }
+  .title-banner-badge .badge-line1 {
+    font-size: 9px;
+    font-weight: 700;
+    color: #1a5276;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .title-banner-badge .badge-line2 {
+    font-size: 11px;
+    font-weight: 800;
+    color: #e8522a;
+    margin-top: 3px;
+  }
+  .title-banner-badge .badge-line3 {
+    font-size: 9px;
+    color: #777;
+    margin-top: 3px;
+  }
+
+  /* ── BODY: two columns ── */
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    flex: 1;
+    padding: 0;
+  }
+
+  .col {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-right: 1px solid #ddd;
+  }
+  .col:last-child { border-right: none; }
+
+  /* ── SECTION HEADER ── matching template style ── */
+  .sec-head {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1a5276;
+    border-bottom: 2px solid #1a5276;
+    padding-bottom: 3px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── BULLET LISTS ── */
+  .bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .bullet-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 10.5px;
+    color: #222;
+    line-height: 1.5;
+  }
+  .bullet-list li::before {
+    content: '•';
+    color: #e8522a;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1.3;
+  }
+  .bullet-list li span { flex: 1; min-width: 0; }
+  .bullet-list li strong { font-weight: 700; }
+
+  /* ── BLOCK DIAGRAM BOX ── */
+  .diagram-wrap {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f9f9f9;
+  }
+  .diagram-wrap img { width: 100%; display: block; }
+  .diagram-caption {
+    font-size: 9px;
+    color: #555;
+    text-align: center;
+    padding: 4px 6px;
+    background: #f0f0f0;
+    font-style: italic;
+    border-top: 1px solid #ddd;
+  }
+
+  /* ── CHALLENGES ── */
+  .challenge-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 10.5px;
+    color: #222;
+    line-height: 1.5;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .challenge-item:last-child { border-bottom: none; }
+  .ch-icon {
+    width: 18px; height: 18px;
+    background: #e8522a;
+    border-radius: 3px;
+    color: white;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-weight: 700;
+  }
+
+  /* ── AGENT DIAGRAM ── */
+  .agent-flow {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .agent-box {
+    border: 1px solid #1a5276;
+    border-radius: 4px;
+    padding: 7px 6px;
+    text-align: center;
+    background: #eaf3fb;
+  }
+  .agent-box-orch {
+    grid-column: 1 / -1;
+    background: #1a5276;
+    color: white;
+    border-color: #1a5276;
+  }
+  .agent-box-name {
+    font-size: 9px;
+    font-weight: 700;
+    color: #1a5276;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .agent-box-orch .agent-box-name { color: white; font-size: 10px; }
+  .agent-box-desc {
+    font-size: 8px;
+    color: #444;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+  .agent-box-orch .agent-box-desc { color: #c9dce9; }
+
+  .agent-icon {
+    width: 15px; height: 15px;
+    display: block;
+    margin: 0 auto 4px;
+    stroke: #1a5276;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .agent-box-orch .agent-icon { stroke: #fff; width: 18px; height: 18px; }
+
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 34px;
+    margin: 2px 0;
+    font-size: 11px;
+    color: #1a5276;
+  }
+
+  /* ── CONTRIBUTIONS ── */
+  .contrib-item {
+    display: flex;
+    gap: 8px;
+    font-size: 10.5px;
+    color: #222;
+    line-height: 1.5;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: flex-start;
+  }
+  .contrib-item:last-child { border-bottom: none; }
+  .contrib-num {
+    width: 18px; height: 18px;
+    background: #1a5276;
+    border-radius: 50%;
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .contrib-item strong { font-weight: 700; }
+
+  /* ── RESULTS TABLE ── */
+  .res-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5px;
+  }
+  .res-table thead th {
+    background: #1a5276;
+    color: white;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border: 1px solid #1a5276;
+  }
+  .res-table td {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    font-size: 9px;
+    color: #222;
+    vertical-align: middle;
+  }
+  .res-table tr:nth-child(even) td { background: #f8f8f8; }
+  .badge-pass {
+    background: #d4edda;
+    color: #155724;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-partial {
+    background: #fff3cd;
+    color: #856404;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 8px;
+    font-weight: 700;
+  }
+
+  /* ── TOOLS USED ── */
+  .tools-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .tool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1.5px solid #1a5276;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #1a5276;
+    background: #eaf3fb;
+    letter-spacing: 0.2px;
+  }
+  .tool-chip img {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+  .tool-chip.orange {
+    border-color: #e8522a;
+    color: #e8522a;
+    background: #fff5f2;
+  }
+
+  /* ── PERF STATS ── */
+  .perf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  .perf-item {
+    background: #f4f6f7;
+    border-left: 3px solid #1a5276;
+    padding: 5px 8px;
+    border-radius: 2px;
+  }
+  .perf-item .val {
+    font-size: 14px;
+    font-weight: 800;
+    color: #e8522a;
+    line-height: 1;
+  }
+  .perf-item .lbl {
+    font-size: 8px;
+    color: #555;
+    margin-top: 1px;
+  }
+
+  /* ── RAG DIAGRAM ── */
+  .rag-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    justify-content: space-between;
+  }
+  .rag-box {
+    background: #eaf3fb;
+    border: 1px solid #1a5276;
+    border-radius: 4px;
+    padding: 6px 5px;
+    text-align: center;
+    flex: 1;
+    font-size: 8px;
+    font-weight: 700;
+    color: #1a5276;
+    line-height: 1.3;
+  }
+  .rag-arrow {
+    font-size: 12px;
+    color: #1a5276;
+    flex-shrink: 0;
+    padding: 0 2px;
+  }
+
+  /* ── WEBSITE IMG ── */
+  .web-img-wrap {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .web-img-wrap img { width: 100%; display: block; }
+
+  /* ── CAPTION ── */
+  .fig-caption {
+    font-size: 8.5px;
+    color: #555;
+    text-align: center;
+    font-style: italic;
+    margin-top: 3px;
+  }
+
+  /* ── QR CODE BLOCK ── */
+  .qr-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+  }
+  .qr-block img {
+    width: 64px;
+    height: 64px;
+    display: block;
+    flex-shrink: 0;
+  }
+  .qr-block-text .qr-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: #1a5276;
+  }
+  .qr-block-text .qr-sub {
+    font-size: 8.5px;
+    color: #666;
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 3px solid #1a5276;
+    background: #fff;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: space-between;
+  }
+  .footer-logo {
+    width: 52px; height: 52px;
+    object-fit: contain;
+  }
+  .footer-uni-text {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 800;
+    font-size: 10px;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    line-height: 1.5;
+  }
+  .footer-uni-text span { color: #e8522a; }
+
+  .footer-sup {
+    text-align: center;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    padding: 0 18px;
+    margin-right: -8px;
+  }
+  .footer-sup-lbl { font-size: 8px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .footer-sup-name { font-size: 11px; font-weight: 700; color: #1a5276; margin-top: 2px; }
+  .footer-sup-dept { font-size: 8px; color: #666; }
+
+  .footer-team { text-align: right; }
+  .footer-team-lbl { font-size: 8px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .footer-member { font-size: 9.5px; color: #222; line-height: 1.6; }
+  .footer-member strong { font-weight: 700; }
+
+  .note-box {
+    background: #fffbf0;
+    border: 1px solid #f0d080;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 9px;
+    color: #555;
+    line-height: 1.5;
+  }
+  .note-box strong { color: #333; }
+
+  /* ── PRINT / PDF EXPORT ── */
+  @page {
+    size: 9.375in 14.0625in;
+    margin: 0;
+  }
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      width: 9.375in;
+      height: 14.0625in;
+      margin: 0;
+      padding: 0;
+    }
+    .poster {
+      width: 9.375in;
+      height: 14.0625in;
+      border: none;
+    }
+    /* Extend footer bg colour to physical bottom edge */
+    .footer {
+      padding-bottom: 18px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <!-- TITLE BANNER -->
+  <div class="title-banner">
+    <div class="title-banner-left">
+      <img src="logo.svg" class="title-banner-logo" alt="Orbis AI Logo">
+      <!-- <div class="title-banner-divider"></div> -->
+      <div class="title-banner-text">
+        <h1>ORBIS <span>AI</span>: AN AGENTIC TRAVEL PLANNING AND BOOKING SYSTEM</h1>
+        <div class="subtitle">Agentic AI · Multi-Agent Orchestration · RAG Personalisation · Real-Time Streaming</div>
+      </div>
+    </div>
+    <div class="title-banner-badge">
+      <div class="badge-line1">Final Year Project · Spring 2026</div>
+      <div class="badge-line2">FAST NUCES Karachi</div>
+      <div class="badge-line3">CS/AI/CY/SE4092</div>
+    </div>
+  </div>
+
+  <!-- TWO-COLUMN BODY -->
+  <div class="body">
+
+    <!-- LEFT COLUMN -->
+    <div class="col">
+
+      <!-- MOTIVATION -->
+      <div>
+        <div class="sec-head">Motivation</div>
+        <ul class="bullet-list">
+          <li><span>Travel planning today is <strong>deeply fragmented</strong> — users switch between 5+ platforms for flights, hotels, and activities, causing decision fatigue and missed savings.</span></li>
+          <li><span>Large Language Models (LLMs) have matured enough to <strong>understand complex multi-step intent</strong> and orchestrate downstream tools autonomously.</span></li>
+          <li><span>No existing consumer product handles <strong>dynamic mid-trip re-planning</strong> — budget changes, flight delays, and availability loss require manual rework.</span></li>
+          <li><span>RAG-based personalisation enables a system that <strong>learns from each interaction</strong>, improving recommendations progressively over time.</span></li>
+        </ul>
+      </div>
+
+      <!-- BLOCK DIAGRAM -->
+      <div>
+        <div class="sec-head">System Architecture</div>
+        <div class="diagram-wrap">
+          <img src="/poster/Architecture.png" alt="Architecture Diagram">
+          <div class="diagram-caption">Figure 1: Orbis AI layered architecture — Next.js 15 frontend communicates with FastAPI backend, which routes through the LangGraph orchestrator to six specialised AI agents backed by Supabase, Redis, and external travel APIs.</div>
+        </div>
+      </div>
+
+      <!-- AGENT ORCHESTRATION -->
+      <div>
+        <div class="sec-head">Multi-Agent Orchestration</div>
+        <div class="agent-flow">
+          <div class="agent-box agent-box-orch">
+            <!-- network / orchestrator icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>
+            <div class="agent-box-name">LangGraph Orchestrator (Gemini 2.5 Flash)</div>
+            <div class="agent-box-desc">Intent classification → conditional edge routing to specialised agents</div>
+          </div>
+        </div>
+        <div class="arrow-row"></div>
+        <div class="agent-flow">
+          <div class="agent-box">
+            <!-- plane icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 4c-1 0-1.7.4-2.3.9L3 12l2 2 3-1 2 4"/><path d="m5 15 1 5 5-1"/></svg>
+            <div class="agent-box-name">Flight</div>
+            <div class="agent-box-desc">SerpApi Google Flights; IATA mapping</div>
+          </div>
+          <div class="agent-box">
+            <!-- building icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+            <div class="agent-box-name">Hotel</div>
+            <div class="agent-box-desc">liteAPI v3.0 search, rates, booking</div>
+          </div>
+          <div class="agent-box">
+            <!-- map icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+            <div class="agent-box-name">Planner</div>
+            <div class="agent-box-desc">Trip entity extraction &amp; coordination</div>
+          </div>
+          <div class="agent-box">
+            <!-- calendar icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+            <div class="agent-box-name">Itinerary</div>
+            <div class="agent-box-desc">CSP scheduling + adaptive scoring</div>
+          </div>
+          <div class="agent-box">
+            <!-- credit-card icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <div class="agent-box-name">Booking</div>
+            <div class="agent-box-desc">Reservation records + Stripe</div>
+          </div>
+          <div class="agent-box">
+            <!-- shield-check icon -->
+            <svg class="agent-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            <div class="agent-box-name">Verifier</div>
+            <div class="agent-box-desc">Consistency &amp; budget validation</div>
+          </div>
+        </div>
+        <div class="fig-caption" style="margin-top:5px;">Figure 2: Six ReAct agents share a common AgentState TypedDict across LangGraph edges.</div>
+      </div>
+
+      <!-- RAG PIPELINE -->
+      <div>
+        <div class="sec-head">RAG Personalisation Pipeline</div>
+        <div class="rag-flow">
+          <div class="rag-box">User Query</div>
+          <div class="rag-arrow">→</div>
+          <div class="rag-box">Gemini<br>Embedding<br>(768-dim)</div>
+          <div class="rag-arrow">→</div>
+          <div class="rag-box">pgvector<br>Cosine Search<br>(Supabase)</div>
+          <div class="rag-arrow">→</div>
+          <div class="rag-box">Context<br>Injection into<br>Agent Prompt</div>
+          <div class="rag-arrow">→</div>
+          <div class="rag-box" style="background:#fff5f2;border-color:#e8522a;color:#e8522a;">Personalised<br>Response</div>
+        </div>
+        <div class="fig-caption" style="margin-top:5px;">Figure 3: Embeddings cached in Redis (24hr TTL) — reduces Gemini API cost ~60%.</div>
+      </div>
+
+      <!-- TOOLS USED -->
+      <div>
+        <div class="sec-head">Tools &amp; Technologies</div>
+        <div class="tools-row">
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/nextdotjs/1a5276" alt="">Next.js 15</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/fastapi/1a5276" alt="">FastAPI</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/langchain/1a5276" alt="">LangGraph</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/langchain/1a5276" alt="">LangChain</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/supabase/1a5276" alt="">Supabase</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/postgresql/1a5276" alt="">pgvector</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/redis/1a5276" alt="">Redis</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/typescript/1a5276" alt="">TypeScript</span>
+          <span class="tool-chip"><img src="https://cdn.simpleicons.org/python/1a5276" alt="">Python</span>
+          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/googlegemini/e8522a" alt="">Gemini 2.5 Flash</span>
+          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/google/e8522a" alt="">SerpApi</span>
+          <!-- <span class="tool-chip orange">liteAPI v3.0</span> -->
+          <span class="tool-chip orange"><img src="https://cdn.simpleicons.org/stripe/e8522a" alt="">Stripe</span>
+        </div>
+      </div>
+
+    </div><!-- /left col -->
+
+    <!-- RIGHT COLUMN -->
+    <div class="col">
+
+      <!-- CHALLENGES -->
+      <div>
+        <div class="sec-head">Challenges</div>
+        <div class="challenge-item"><div class="ch-icon">1</div><div>Building a reliable <strong>intent routing layer</strong> — ambiguous queries must be classified correctly as the quality of the Orchestrator determines overall usability.</div></div>
+        <div class="challenge-item"><div class="ch-icon">2</div><div><strong>SSE streaming</strong> is architecturally significant — it constrains how LangGraph emits events and how React state is updated during multi-agent execution.</div></div>
+        <div class="challenge-item"><div class="ch-icon">3</div><div><strong>External API reliability</strong> — SerpApi and liteAPI can fail; circuit breakers with in-memory fallback must be in place for graceful degradation.</div></div>
+        <div class="challenge-item"><div class="ch-icon">4</div><div><strong>RAG context quality</strong> — retrieving too much context increases token cost and dilutes relevance; cosine thresholding and caching are essential.</div></div>
+        <div class="challenge-item"><div class="ch-icon">5</div><div><strong>Constraint satisfaction in real time</strong> — itinerary re-planning must complete in under 3 seconds to maintain the conversational UX.</div></div>
+      </div>
+
+      <!-- OUR CONTRIBUTION -->
+      <div>
+        <div class="sec-head">Our Contributions</div>
+        <div class="contrib-item"><div class="contrib-num">1</div><div><strong>Domain-Specialised Multi-Agent Architecture</strong> — six ReAct agents with focused tool suites orchestrated via LangGraph StateGraph, enabling modular and extensible travel AI.</div></div>
+        <div class="contrib-item"><div class="contrib-num">2</div><div><strong>Live API Integration</strong> — real flight data from SerpApi and hotel availability from liteAPI v3.0; no mocked responses.</div></div>
+        <div class="contrib-item"><div class="contrib-num">3</div><div><strong>RAG-Based Personalisation</strong> — Gemini-embedded user preferences + travel guides retrieved via pgvector; adaptive scoring weights refined from feedback.</div></div>
+        <div class="contrib-item"><div class="contrib-num">4</div><div><strong>Dynamic Re-Planning Engine</strong> — constraint propagation handles budget changes, date shifts, and availability loss in real time (&lt;3s).</div></div>
+        <div class="contrib-item"><div class="contrib-num">5</div><div><strong>Multi-Modal Trip Summariser</strong> — LLM narrative + interactive maps + landmark images + weather overlay generated from structured itinerary JSONB.</div></div>
+        <div class="contrib-item"><div class="contrib-num">6</div><div><strong>State-of-the-Art Chat Interface</strong> — SSE-streamed responses, structured flight/hotel cards, side-panel artifact display, fully responsive design.</div></div>
+      </div>
+
+      <!-- RESULTS -->
+      <div>
+        <div class="sec-head">Results</div>
+        <table class="res-table">
+          <thead>
+            <tr>
+              <th>Test Scenario</th>
+              <th style="text-align:center">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Flight search &amp; IATA code resolution</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>Multi-turn itinerary refinement (history injection)</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>Hotel search &amp; pre-booking via liteAPI sandbox</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>Dynamic re-planning on budget modification</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>Multi-modal summary (narrative + map + weather)</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>SSE streaming stability (50-message session)</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>Redis circuit breaker + in-memory fallback</td><td style="text-align:center"><span class="badge-pass">✓ Pass</span></td></tr>
+            <tr><td>Intent misclassification recovery</td><td style="text-align:center"><span class="badge-partial">~ Partial</span></td></tr>
+          </tbody>
+        </table>
+
+        <!-- PERFORMANCE -->
+        <div style="margin-top:12px;">
+          <div class="sec-head">Performance Metrics</div>
+          <div class="perf-grid">
+            <div class="perf-item"><div class="val">1.5–2.5s</div><div class="lbl">First streamed token latency</div></div>
+            <div class="perf-item"><div class="val">2–4s</div><div class="lbl">Live flight search (SerpApi)</div></div>
+            <div class="perf-item"><div class="val">&lt;5ms</div><div class="lbl">RAG retrieval (Redis cached)</div></div>
+            <div class="perf-item"><div class="val">&lt;3s</div><div class="lbl">Dynamic itinerary re-plan</div></div>
+          </div>
+        </div>
+
+        <div class="qr-block">
+          <img src="qrcode_348308475_1a4ee064e098fedbc84e80fb64773c2c.png" alt="Orbis AI QR Code">
+          <div class="qr-block-text">
+            <div class="qr-title">Try Orbis AI</div>
+            <div class="qr-sub">Scan to explore the live demo and interact with the multi-agent travel planner.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right col -->
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img src="/poster/National_University_of_Computer_and_Emerging_Sciences_logo.png" class="footer-logo" alt="NUCES">
+      <div class="footer-uni-text">
+        <span>FAST</span> School of Computing<br>
+        National University of Computer<br>
+        &amp; Emerging Sciences · Karachi Campus
+      </div>
+    </div>
+
+    <div class="footer-sup">
+      <div class="footer-sup-lbl">Supervised By</div>
+      <div class="footer-sup-name">Ms. Sumaiyah Zahid</div>
+      <div class="footer-sup-dept">FAST NUCES, Karachi</div>
+    </div>
+
+    <div class="footer-team">
+      <div class="footer-team-lbl">Group Members</div>
+      <div class="footer-member"><strong>M. Talha Yousif</strong> (22K-5146)</div>
+      <div class="footer-member"><strong>Salik Ahmed Bhatti</strong> (22K-5114)</div>
+      <div class="footer-member"><strong>Toheed Ali</strong> (22K-4027)</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

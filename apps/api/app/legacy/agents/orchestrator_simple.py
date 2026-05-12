@@ -209,7 +209,7 @@ class OrchestratorAgent:
         message: str,
         conversation_history: List[Dict[str, str]],
         agent_type: str = "orchestrator",
-        model: str = "gemini-2.0-flash-exp"
+        model: str = "gemini-2.5-flash"
     ) -> AsyncGenerator[str, None]:
         """
         Stream response tokens using the appropriate specialized agent.

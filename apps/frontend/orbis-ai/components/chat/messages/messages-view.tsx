@@ -182,7 +182,7 @@ export function MessagesView({
           {emptyState || 'No messages yet. Start the conversation!'}
         </div>
       ) : (
-        <div className="mt-auto flex flex-col gap-8 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-36">
+        <div className="mt-auto flex flex-col gap-8 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {visibleMessages.map((msg, index) => {
             const siblingMeta = getSiblingMeta(msg.id)
             const msgDate = new Date(msg.created_at || Date.now());

@@ -11,6 +11,7 @@ These tools let agents retrieve contextual information from Supabase:
 
 import json
 from langchain_core.tools import tool
+from app.agents.tools.base import log_tool_call
 from app.services.database import db_service
 from app.services.rag_service import RAGService
 from app.logging_config import get_logger
@@ -20,6 +21,7 @@ _rag = RAGService()
 
 
 @tool
+@log_tool_call
 async def get_user_preferences(user_id: str) -> str:
     """
     Retrieve travel preferences for a given user from the database.
@@ -46,6 +48,7 @@ async def get_user_preferences(user_id: str) -> str:
 
 
 @tool
+@log_tool_call
 async def get_travel_history(user_id: str) -> str:
     """
     Retrieve a user's past travel history entries.
@@ -72,6 +75,7 @@ async def get_travel_history(user_id: str) -> str:
 
 
 @tool
+@log_tool_call
 async def search_destinations(query: str) -> str:
     """
     Semantically search travel guide knowledge base for destination info.
@@ -109,6 +113,7 @@ async def search_destinations(query: str) -> str:
 
 
 @tool
+@log_tool_call
 async def search_attractions(city: str, category: str = "") -> str:
     """
     Search for tourist attractions in a given city, optionally filtered by category.
@@ -136,6 +141,7 @@ async def search_attractions(city: str, category: str = "") -> str:
 
 
 @tool
+@log_tool_call
 async def search_airports(query: str) -> str:
     """
     Search airports by name, city, or IATA code.

@@ -78,6 +78,7 @@ async def stream_chat(
     # Convert history to context dict
     context = {
         "conversation_id": conversation_id,
+        "user_id": user_id,
         "history": history,
         "rag_context": rag_context,
     }
@@ -113,10 +114,16 @@ async def stream_chat(
                     }
                 
                 elif event_type == "content":
-                    # Content token from LLM
                     content = event.get("content", "")
                     full_response += content
                     token_count += 1
+                    logger.info(
+                        "sse_token_sent",
+                        token_index=token_count,
+                        chars=len(content),
+                        preview=repr(content[:50]),
+                        conversation_id=conversation_id,
+                    )
                     yield {
                         "event": "token",
                         "data": json.dumps({

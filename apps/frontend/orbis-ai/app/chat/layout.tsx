@@ -8,11 +8,19 @@ import { cn } from '@/lib/utils'
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
 
   useEffect(() => {
     const handleToggle = () => setMobileNavOpen(true)
+    const handleToggleDesktop = () => setDesktopSidebarOpen(prev => !prev)
+
     document.addEventListener('toggle-mobile-sidebar', handleToggle)
-    return () => document.removeEventListener('toggle-mobile-sidebar', handleToggle)
+    document.addEventListener('toggle-desktop-sidebar', handleToggleDesktop)
+
+    return () => {
+      document.removeEventListener('toggle-mobile-sidebar', handleToggle)
+      document.removeEventListener('toggle-desktop-sidebar', handleToggleDesktop)
+    }
   }, [])
 
   useEffect(() => {
@@ -38,8 +46,15 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   return (
     <div className="h-screen w-full bg-background overflow-hidden flex relative">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex w-[260px] h-full flex-col shrink-0 border-r border-border bg-muted/20 overflow-hidden">
-        <ChatSidebar className="bg-transparent" />
+      <div 
+        className={cn(
+          "hidden lg:flex h-full flex-col shrink-0 border-r border-border bg-muted/20 overflow-hidden transition-[width] duration-300",
+          desktopSidebarOpen ? "w-[260px]" : "w-0 border-none"
+        )}
+      >
+        <div className="w-[260px] h-full">
+          <ChatSidebar className="bg-transparent" />
+        </div>
       </div>
 
       {/* Main Content Area */}

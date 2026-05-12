@@ -9,11 +9,13 @@ import os
 import json
 import httpx
 from langchain_core.tools import tool
+from app.agents.tools.base import log_tool_call
 from app.logging_config import get_logger
+from app.config import settings
 
 logger = get_logger("agents.tools.flight")
 
-SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "")
+SERPAPI_KEY = settings.SERPAPI_KEY or ""
 SERPAPI_BASE = "https://serpapi.com/search.json"
 
 # Common city → IATA airport mappings to help resolve plain city names
@@ -53,6 +55,7 @@ def _city_to_iata(city: str) -> str:
 
 
 @tool
+@log_tool_call
 async def search_flights(
     origin: str,
     destination: str,
@@ -196,6 +199,7 @@ async def search_flights(
 
 
 @tool
+@log_tool_call
 async def get_airport_info(query: str) -> str:
     """
     Look up airport information by city name or IATA code.

@@ -213,7 +213,7 @@ class GeminiService:
             )
             return "I encountered an error while processing your request. Please try again."
     
-    async def analyze_intent(self, user_message: str) -> Dict[str, Any]:
+    async def analyze_intent(self, user_message: str, conversation_history: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
         """Analyze user intent for routing to appropriate agents."""
         import time
         start_time = time.time()
@@ -232,12 +232,26 @@ class GeminiService:
             from datetime import date
             today_str = date.today().strftime("%B %d, %Y")
 
+            history_text = ""
+            if conversation_history:
+                history_text = "Recent conversation history for context:\n"
+                for msg in conversation_history[-4:]:  # Last 4 messages
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    if content:
+                        # Truncate long JSON/RAG outputs so they don't drown out intent
+                        if len(content) > 300:
+                            content = content[:300] + "... [truncated]"
+                        history_text += f"{role}: {content}\n"
+
             intent_prompt = f"""
             Today's date is {today_str}. Use this as reference when interpreting relative dates like "next Wednesday" or "in 3 days".
 
             Analyze this travel-related message and identify the user's intent and key entities.
+            
+            {history_text}
 
-            Message: "{user_message}"
+            Current User Message: "{user_message}"
 
             Classify the intent as EXACTLY one of these strings:
             - flight_search: Looking for flights or asking about departure dates

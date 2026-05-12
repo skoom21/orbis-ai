@@ -4,6 +4,7 @@ Trip and booking management tools for the Booking and Itinerary agents.
 
 import json
 from langchain_core.tools import tool
+from app.agents.tools.base import log_tool_call
 from app.services.database import db_service
 from app.logging_config import get_logger
 
@@ -11,6 +12,7 @@ logger = get_logger("agents.tools.trip")
 
 
 @tool
+@log_tool_call
 async def create_trip(
     user_id: str,
     title: str,
@@ -18,7 +20,7 @@ async def create_trip(
     start_date: str,
     end_date: str,
     estimated_budget: float = 0,
-    trip_type: str = "leisure",
+    trip_type: str = "relaxation",
     number_of_travelers: int = 1,
     currency: str = "USD",
 ) -> str:
@@ -32,7 +34,7 @@ async def create_trip(
         start_date: Trip start date in YYYY-MM-DD format.
         end_date: Trip end date in YYYY-MM-DD format.
         estimated_budget: Estimated total budget in specified currency.
-        trip_type: Type of trip: leisure, cultural, adventure, business.
+        trip_type: Type of trip: adventure, cultural, relaxation, business, family, romantic, solo.
         number_of_travelers: Number of travelers.
         currency: Budget currency code (default USD).
 
@@ -68,6 +70,7 @@ async def create_trip(
 
 
 @tool
+@log_tool_call
 async def get_trip_summary(trip_id: str) -> str:
     """
     Retrieve full details for an existing trip including bookings.
@@ -97,6 +100,7 @@ async def get_trip_summary(trip_id: str) -> str:
 
 
 @tool
+@log_tool_call
 async def update_itinerary(trip_id: str, itinerary_json: str) -> str:
     """
     Update the itinerary for an existing trip.
@@ -126,6 +130,7 @@ async def update_itinerary(trip_id: str, itinerary_json: str) -> str:
 
 
 @tool
+@log_tool_call
 async def create_booking(
     trip_id: str,
     user_id: str,
@@ -134,6 +139,7 @@ async def create_booking(
     details: str,
     price: float,
     currency: str = "USD",
+    status: str = "confirmed",
 ) -> str:
     """
     Create a booking record for a trip (flight, hotel, activity, etc.).
@@ -146,6 +152,9 @@ async def create_booking(
         details: JSON string with booking-specific details (e.g., flight numbers, hotel name).
         price: Total price of the booking.
         currency: Currency code (default USD).
+        status: Booking lifecycle status. Must match booking_status enum
+            (searching, held, payment_pending, confirmed, cancelled, refunded, failed).
+            Defaults to confirmed for finalized bookings.
 
     Returns:
         JSON string with the created booking id and status.
@@ -157,6 +166,19 @@ async def create_booking(
             details_dict = json.loads(details)
         except Exception:
             details_dict = {"info": details}
+        allowed_statuses = {
+            "searching",
+            "held",
+            "payment_pending",
+            "confirmed",
+            "cancelled",
+            "refunded",
+            "failed",
+        }
+        normalized_status = (status or "confirmed").strip().lower()
+        if normalized_status not in allowed_statuses:
+            normalized_status = "confirmed"
+
         result = db_service.supabase.table("bookings").insert({
             "trip_id": trip_id,
             "user_id": user_id,
@@ -165,7 +187,7 @@ async def create_booking(
             "details": details_dict,
             "price": price,
             "currency": currency,
-            "status": "pending",
+            "status": normalized_status,
         }).execute()
         if result.data:
             return json.dumps({"booking": result.data[0], "status": "created"})

@@ -118,7 +118,16 @@ function parseHotelItem(value: unknown): HotelResultItem | null {
     toNumber(value.total_price_usd) ??
     toNumber(value.price) ??
     toNumber(value.totalPrice) ??
+    (isRecord(value.lowest_price) ? toNumber(value.lowest_price.total_price) : undefined) ??
+    (isRecord(value.lowest_price) ? toNumber(value.lowest_price.amount) : undefined) ??
     toNumber((value as Record<string, unknown>).price_per_night)
+
+  const currency =
+    typeof value.currency === 'string'
+      ? value.currency
+      : isRecord(value.lowest_price) && typeof value.lowest_price.currency === 'string'
+        ? value.lowest_price.currency
+        : 'USD'
 
   return {
     id,
@@ -135,9 +144,23 @@ function parseHotelItem(value: unknown): HotelResultItem | null {
           ? value.main_photo
           : undefined,
     price,
-    currency: typeof value.currency === 'string' ? value.currency : 'USD',
-    roomType: typeof value.room_type === 'string' ? value.room_type : typeof value.roomType === 'string' ? value.roomType : undefined,
-    offerId: typeof value.offer_id === 'string' ? value.offer_id : typeof value.offerId === 'string' ? value.offerId : undefined,
+    currency,
+    roomType:
+      typeof value.room_type === 'string'
+        ? value.room_type
+        : typeof value.roomType === 'string'
+          ? value.roomType
+          : typeof value.best_room_type === 'string'
+            ? value.best_room_type
+            : undefined,
+    offerId:
+      typeof value.offer_id === 'string'
+        ? value.offer_id
+        : typeof value.offerId === 'string'
+          ? value.offerId
+          : typeof value.best_offer_id === 'string'
+            ? value.best_offer_id
+            : undefined,
     source: value,
   }
 }
@@ -184,22 +207,40 @@ function parseBookingItems(value: unknown): BookingSummaryItem[] {
 function parseStructuredPayload(value: unknown): MessageContentPart[] {
   if (!isRecord(value)) return []
 
-  if (Array.isArray(value.hotels)) {
-    const items = parseHotelItems(value.hotels)
+  let payload = value;
+  // Deep flatten if the AI wraps the response in a single key object e.g. {"hotel_response": {"hotels": [...]}}
+  if (Object.keys(payload).length === 1) {
+    const inner = Object.values(payload)[0];
+    if (isRecord(inner) && (Array.isArray(inner.hotels) || Array.isArray(inner.bookings) || Array.isArray(inner.flights))) {
+      payload = inner;
+    }
+  }
+
+  if (Array.isArray(payload.hotels)) {
+    const items = parseHotelItems(payload.hotels)
     if (items.length > 0) {
       return [
         {
           type: 'hotel-results',
-          title: typeof value.title === 'string' ? value.title : 'Available Hotels',
-          subtitle: typeof value.note === 'string' ? value.note : undefined,
+          title: typeof payload.title === 'string' ? payload.title : 'Available Hotels',
+          subtitle: typeof payload.note === 'string' ? payload.note : undefined,
           items,
         },
       ]
     }
   }
 
-  if (typeof value.status === 'string' && (typeof value.booking_id === 'string' || typeof value.bookingId === 'string')) {
-    const parsedBooking = parseBookingItem(value)
+  if (Array.isArray(payload.flights) && payload.flights.length > 0) {
+    return [
+      {
+        type: 'flight-results',
+        data: payload.flights,
+      },
+    ]
+  }
+
+  if (typeof payload.status === 'string' && (typeof payload.booking_id === 'string' || typeof payload.bookingId === 'string')) {
+    const parsedBooking = parseBookingItem(payload)
     if (parsedBooking) {
       return [
         {
@@ -211,13 +252,13 @@ function parseStructuredPayload(value: unknown): MessageContentPart[] {
     }
   }
 
-  if (Array.isArray(value.bookings)) {
-    const bookings = parseBookingItems(value.bookings)
+  if (Array.isArray(payload.bookings)) {
+    const bookings = parseBookingItems(payload.bookings)
     if (bookings.length > 0) {
       return [
         {
           type: 'booking-update',
-          title: typeof value.title === 'string' ? value.title : 'Booking Updates',
+          title: typeof payload.title === 'string' ? payload.title : 'Booking Updates',
           items: bookings,
         },
       ]
@@ -228,10 +269,22 @@ function parseStructuredPayload(value: unknown): MessageContentPart[] {
 }
 
 export function parseMessageParts(content: string): MessageContentPart[] {
-  const trimmed = content.trim()
+  let trimmed = content.trim()
+  
+  // if wrapped in markdown formatting, unwrap it
+  if (trimmed.startsWith('```')) {
+    trimmed = trimmed.replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim()
+  }
+
   if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
     return [{ type: 'markdown', markdown: content }]
   }
+
+  // Attempt to fix common Python-to-JSON formatting errors from the LLM
+  trimmed = trimmed
+    .replace(/:\s*None/g, ': null')
+    .replace(/:\s*True/g, ': true')
+    .replace(/:\s*False/g, ': false')
 
   try {
     const parsed = JSON.parse(trimmed)
@@ -298,6 +351,26 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                    if (!inline && lang === 'flight') return <FlightCard data={String(children)} />
                    if (!inline && lang === 'hotel') return <HotelCard data={String(children)} />
                    if (!inline && lang === 'itinerary') return <ItineraryCard data={String(children)} />
+                   if (!inline && lang === 'json') {
+                     try {
+                       const cleanData = String(children)
+                         .replace(/:\s*None/g, ': null')
+                         .replace(/:\s*True/g, ': true')
+                         .replace(/:\s*False/g, ': false');
+                       const parsed = JSON.parse(cleanData);
+                       // First check if it's an array of single items mapped to <HotelCard>
+                       // If the AI accidentally returned [{...hotel...}] instead of {"hotels": []}
+                       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id && !parsed.hotels) {
+                           return <div className="space-y-4">{parsed.map((p, i) => <HotelCard key={i} data={JSON.stringify(p)} />)}</div>
+                       }
+                       const structured = parseStructuredPayload(parsed);
+                       if (structured.length > 0) {
+                         const s = structured[0];
+                         if (s.type === 'hotel-results') return <HotelResultsCarousel title={s.title} subtitle={s.subtitle} items={s.items} />
+                         if (s.type === 'booking-update') return <BookingStatusCards title={s.title} items={s.items} />
+                       }
+                     } catch {}
+                   }
                    return <code className={cn("bg-muted/50 px-1.5 py-0.5 rounded text-[13px] font-mono", !inline && "block p-4 overflow-x-auto mb-4 border border-border/50", className)} {...props}>{children}</code>
                 }
               }}
@@ -386,6 +459,17 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
               subtitle={part.subtitle}
               items={part.items}
             />
+          )
+        }
+
+        if (part.type === 'flight-results') {
+          const rawFlights = Array.isArray(part.data) ? part.data : [];
+          return (
+            <div key={`flight-results-${index}`} className="my-4 space-y-4">
+              {rawFlights.map((flight, fIdx) => (
+                <FlightCard key={fIdx} data={JSON.stringify(flight)} />
+              ))}
+            </div>
           )
         }
 
