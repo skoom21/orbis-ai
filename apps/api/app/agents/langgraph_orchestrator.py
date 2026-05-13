@@ -643,7 +643,19 @@ Be thorough, precise, and constructive. Always explain any issues found clearly.
             # ── Tool call ends ──────────────────────────────────────────────
             elif kind == "on_tool_end":
                 raw_output = event.get("data", {}).get("output", "")
-                output_str = str(raw_output) if raw_output is not None else ""
+                # In langchain-core >= 0.2, on_tool_end output is a ToolMessage
+                # object rather than a raw string.  Extract its .content first.
+                if hasattr(raw_output, "content"):
+                    content_val = raw_output.content
+                    output_str = (
+                        content_val
+                        if isinstance(content_val, str)
+                        else json.dumps(content_val, default=str)
+                    )
+                elif raw_output is not None:
+                    output_str = str(raw_output)
+                else:
+                    output_str = ""
                 # Capture flight/hotel data so we can emit it as a content
                 # event after streaming — this gets included in full_response
                 # saved to the DB and rendered as cards on the frontend.

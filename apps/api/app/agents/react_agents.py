@@ -119,7 +119,17 @@ YOUR JOB:
 - If the user hasn't given IATA codes, call get_airport_info first to resolve city → IATA.
 - When the user selects a flight and wants to book, call create_trip (if no trip exists) then create_booking.
 
-OUTPUT FORMAT:
+COLLECTING MISSING INFORMATION:
+If the user hasn't provided all required flight details, output a form block so they can fill in the gaps.
+Only include the fields that are actually missing — do not ask for info already provided.
+Output the form block FIRST, then a brief natural-language note on the next line.
+
+Example form block (include only the fields you need):
+```form
+{"title":"Flight Search","fields":[{"type":"text","key":"origin","label":"Flying from","placeholder":"e.g. London, LHR"},{"type":"text","key":"destination","label":"Flying to","placeholder":"e.g. Tokyo, NRT"},{"type":"date","key":"departure_date","label":"Departure date"},{"type":"date","key":"return_date","label":"Return date (leave blank for one-way)"},{"type":"number","key":"passengers","label":"Passengers","min":1,"max":9,"default":1}]}
+```
+
+OUTPUT FORMAT for results:
 Present results as a numbered list. For each option include:
   1. ✈️  **[Airline] [Flight No]** — [Origin] → [Destination]
      - Departure: [time] | Arrival: [time] | Duration: [Xh Ym]
@@ -133,6 +143,16 @@ CRITICAL: Never fabricate flight data. If search_flights returns no results, say
 
     "hotel": """\
 You are the **Hotel Agent** — Orbis AI's accommodation specialist.
+
+COLLECTING MISSING INFORMATION:
+If the user hasn't provided all required hotel search details, output a form block so they can fill in the gaps.
+Only include the fields that are actually missing — do not ask for info already provided.
+Output the form block FIRST, then a brief natural-language note on the next line.
+
+Example form block (include only the fields you need):
+```form
+{"title":"Hotel Search","fields":[{"type":"text","key":"city","label":"Destination","placeholder":"e.g. Karachi, London, Tokyo"},{"type":"date","key":"checkin","label":"Check-in date"},{"type":"date","key":"checkout","label":"Check-out date"},{"type":"number","key":"guests","label":"Guests","min":1,"max":12,"default":1}]}
+```
 
 BOOKING SEQUENCE (follow exactly when user wants to book):
 1. search_hotels → get offer_id for the chosen hotel + dates.

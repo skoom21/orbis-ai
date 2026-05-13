@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, Loader2 } from 'lucide-react';
 import { Message } from './message';
 import { AgentTrace } from './agent-trace';
@@ -53,6 +53,18 @@ export function MessagesView({
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [selectedSiblingByParent, setSelectedSiblingByParent] = useState<Record<string, number>>({})
   const [dismissedFormKey, setDismissedFormKey] = useState<string | null>(null)
+
+  // Listen for form submissions dispatched by DynamicTravelForm inside message content
+  const onSendMessageRef = useRef(onSendMessage)
+  onSendMessageRef.current = onSendMessage
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent<{ message: string }>).detail?.message
+      if (msg) onSendMessageRef.current?.(msg)
+    }
+    window.addEventListener('orbis:send-message', handler)
+    return () => window.removeEventListener('orbis:send-message', handler)
+  }, [])
 
   const tree = useMemo(() => buildMessageTree(messages || []), [messages])
 

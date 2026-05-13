@@ -19,6 +19,7 @@ const HOTEL_DATE_PATTERNS = [
   /check.?in.*date/i,
   /when.*check in/i,
   /what.*dates.*hotel/i,
+  /hotel.*what.*dates/i,
   /arrival.*date/i,
 ]
 
@@ -28,30 +29,19 @@ const PASSENGER_PATTERNS = [
   /how many.*travel/i,
 ]
 
-// Trip planner: fires when the agent asks multiple planning questions at once.
-// Avoid /s flag (dotAll) — use [\s\S] for cross-line matching since target is ES2017.
-const TRIP_PLANNER_PATTERNS = [
-  // "how many days" + dates together
-  /how many days[\s\S]{0,200}(travel date|when.*plan|what date|which month)/i,
-  /(travel date|when.*plan|what date|which month)[\s\S]{0,200}how many days/i,
-  // "how many days" + interests
-  /how many days[\s\S]{0,200}(interest|activit|preferenc|like to (?:do|see|visit|explore))/i,
-  // dates + interests together
-  /(travel date|when.*plan|what date|which month)[\s\S]{0,200}(interest|activit|preferenc)/i,
-  // generic multi-question check: numbered/bulleted lines with planning keywords
-  /(\d\.\s|\*\s|-\s).{0,60}(day|date|interest|activit|duration|long|travel)/i,
-  // explicit "could you tell me" + multiple sub-questions
-  /could you (?:please )?(?:tell|share|let me know)[\s\S]{0,80}\?[\s\S]{0,200}\?/i,
-  // planning questions with "specific interests"
-  /specific interests[\s\S]{0,200}(day|date|duration|long|travel)/i,
-  /(day|date|duration|long|travel)[\s\S]{0,200}specific interests/i,
-]
+// NOTE: The trip-planner pattern has been intentionally removed.
+// Agents now emit an explicit ```form block when they need structured input,
+// which is rendered by DynamicTravelForm in content-parts.tsx.
+// This fallback only handles the narrow, unambiguous cases where
+// the agent asks for dates or passenger count in plain text.
 
 export type InlineFormType = 'flight-dates' | 'hotel-dates' | 'passengers' | 'trip-planner' | null
 
 export function detectInlineFormType(message: string): InlineFormType {
-  // Guard: don't show any inline form when the message is displaying search results.
-  // Flight/hotel results always have multiple prices, directional arrows, or emoji markers.
+  // Guard: don't show any inline form when the message contains a ```form block
+  // (those are rendered inline by DynamicTravelForm) or search results.
+  if (/```form/i.test(message)) return null
+
   const hasFlightResults = (
     /✈️\s*\*\*/.test(message) ||
     /Duration:\s*\d+h/i.test(message) ||
@@ -65,8 +55,6 @@ export function detectInlineFormType(message: string): InlineFormType {
   const hasManyPrices = (message.match(/\$\d[\d,]+/g) || []).length >= 3
   if (hasFlightResults || hasHotelResults || hasManyPrices) return null
 
-  // Trip planner takes priority — it's the most comprehensive form
-  if (TRIP_PLANNER_PATTERNS.some((p) => p.test(message))) return 'trip-planner'
   if (FLIGHT_DATE_PATTERNS.some((p) => p.test(message))) return 'flight-dates'
   if (HOTEL_DATE_PATTERNS.some((p) => p.test(message))) return 'hotel-dates'
   if (PASSENGER_PATTERNS.some((p) => p.test(message))) return 'passengers'

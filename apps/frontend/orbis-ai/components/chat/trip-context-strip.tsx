@@ -116,7 +116,7 @@ function Pill({
       )}
     >
       {icon}
-      <span className="max-w-[160px] truncate">{label}</span>
+      <span className="max-w-40 truncate">{label}</span>
     </div>
   )
 }

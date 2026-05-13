@@ -10,6 +10,8 @@ import type {
   BookingSummaryItem,
 } from '../types'
 import { FlightCard, HotelCard, ItineraryCard, HotelResultsCarousel, BookingStatusCards } from './travel-cards'
+import { DynamicTravelForm } from './dynamic-form'
+import type { DynamicFormSchema } from './dynamic-form'
 import { cn } from '@/lib/utils'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -334,13 +336,14 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
               key={`md-${index}`} 
               remarkPlugins={[remarkGfm]}
               components={{
-                ul: ({node, ...props}) => <ul className="pl-5 list-disc space-y-1 mb-4 text-[15px]" {...props} />,
-                ol: ({node, ...props}) => <ol className="pl-5 list-decimal space-y-1 mb-4 text-[15px]" {...props} />,
-                li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                table: ({node, ...props}) => <div className="overflow-x-auto mb-4 w-full rounded-lg border border-border/80"><table className="w-full text-left border-collapse text-[14px]" {...props} /></div>,
-                th: ({node, ...props}) => <th className="border-b border-border/80 p-3 font-semibold bg-muted/30 text-foreground" {...props} />,
-                td: ({node, ...props}) => <td className="border-b border-border/40 p-3 align-top" {...props} />,
+                ul: ({node, ...props}) => { void node; return <ul className="pl-5 list-disc space-y-1 mb-4 text-[15px]" {...props} /> },
+                ol: ({node, ...props}) => { void node; return <ol className="pl-5 list-decimal space-y-1 mb-4 text-[15px]" {...props} /> },
+                li: ({node, ...props}) => { void node; return <li className="mb-1" {...props} /> },
+                table: ({node, ...props}) => { void node; return <div className="overflow-x-auto mb-4 w-full rounded-lg border border-border/80"><table className="w-full text-left border-collapse text-[14px]" {...props} /></div> },
+                th: ({node, ...props}) => { void node; return <th className="border-b border-border/80 p-3 font-semibold bg-muted/30 text-foreground" {...props} /> },
+                td: ({node, ...props}) => { void node; return <td className="border-b border-border/40 p-3 align-top" {...props} /> },
                 p: ({node, children, ...props}) => {
+                  void node
                   const text = typeof children === 'string' ? children : Array.isArray(children) ? children.map(c => typeof c === 'string' ? c : '').join('') : ''
                   // Strip raw trip ID lines; show a workspace button instead
                   const isTripSaved = /trip id is|trip.*created.*system|I['']ve created your trip/i.test(text)
@@ -365,16 +368,25 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                   }
                   return <p className="mb-4 text-[15px] leading-relaxed" {...props}>{children}</p>
                 },
-                h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 mt-6 text-foreground" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-5 text-foreground" {...props} />,
-                h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-3 mt-4 text-foreground" {...props} />,
-                strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
-                code: ({node, inline, className, children, ...props}: any) => {
+                 h1: ({node, ...props}) => { void node; return <h1 className="text-2xl font-bold mb-4 mt-6 text-foreground" {...props} /> },
+                 h2: ({node, ...props}) => { void node; return <h2 className="text-xl font-bold mb-3 mt-5 text-foreground" {...props} /> },
+                 h3: ({node, ...props}) => { void node; return <h3 className="text-lg font-semibold mb-3 mt-4 text-foreground" {...props} /> },
+                 strong: ({node, ...props}) => { void node; return <strong className="font-semibold text-foreground" {...props} /> },
+                 code: ({node, inline, className, children, ...props}) => {
+                   void node
                    const match = /language-(\w+)/.exec(className || '')
                    const lang = match ? match[1] : ''
                    if (!inline && lang === 'flight') return <FlightCard data={String(children)} />
                    if (!inline && lang === 'hotel') return <HotelCard data={String(children)} />
                    if (!inline && lang === 'itinerary') return <ItineraryCard data={String(children)} />
+                   if (!inline && lang === 'form') {
+                     try {
+                       const schema = JSON.parse(String(children).trim()) as DynamicFormSchema
+                       if (schema && Array.isArray(schema.fields)) {
+                         return <DynamicTravelForm schema={schema} className="my-3 max-w-sm" />
+                       }
+                     } catch {}
+                   }
                    if (!inline && lang === 'json') {
                      try {
                        const cleanData = String(children)
