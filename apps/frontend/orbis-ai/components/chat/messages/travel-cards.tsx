@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils'
 import { ChatContext } from '../providers'
 import { apiClient } from '@/lib/api-client'
+import type { HotelPrebookResponse, HotelBookResponse } from '@/lib/api-client'
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -46,8 +47,8 @@ interface HotelBookingPanelProps {
 function HotelBookingPanel({ hotel, offerId }: HotelBookingPanelProps) {
   const [hotelDetails, setHotelDetails] = useState(hotel)
   const [detailsError, setDetailsError] = useState<string | null>(null)
-  const [prebookData, setPrebookData] = useState<Record<string, unknown> | null>(null)
-  const [bookingData, setBookingData] = useState<Record<string, unknown> | null>(null)
+  const [prebookData, setPrebookData] = useState<HotelPrebookResponse | null>(null)
+  const [bookingData, setBookingData] = useState<HotelBookResponse | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [busyAction, setBusyAction] = useState<'details' | 'prebook' | 'book' | null>(null)
