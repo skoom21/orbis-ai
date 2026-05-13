@@ -129,6 +129,19 @@ async def search_hotels_endpoint(
     return json.loads(result)
 
 
+@router.get("/hotels/details/{hotel_id}")
+async def get_hotel_details_endpoint(
+    hotel_id: str,
+    current_user: Dict[str, Any] = Depends(get_optional_user),
+):
+    """Fetch detailed hotel data via liteAPI."""
+    import json
+    from app.agents.tools.hotel_tools import get_hotel_details
+
+    result = await get_hotel_details.ainvoke({"hotel_id": hotel_id})
+    return json.loads(result)
+
+
 @router.post("/hotels/prebook")
 async def prebook_hotel(
     request: HotelPrebookRequest,

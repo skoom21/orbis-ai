@@ -270,8 +270,56 @@ function parseStructuredPayload(value: unknown): MessageContentPart[] {
   return []
 }
 
+function extractStructuredPartsFromMarkdown(content: string): MessageContentPart[] | null {
+  const fencePattern = /```(?:json|javascript|js)?\s*\n([\s\S]*?)```/gi
+  let match: RegExpExecArray | null
+
+  while ((match = fencePattern.exec(content)) !== null) {
+    const fencedContent = match[1].trim()
+    if (!fencedContent.startsWith('{') && !fencedContent.startsWith('[')) {
+      continue
+    }
+
+    const normalized = fencedContent
+      .replace(/:\s*None/g, ': null')
+      .replace(/:\s*True/g, ': true')
+      .replace(/:\s*False/g, ': false')
+
+    try {
+      const parsed = JSON.parse(normalized)
+      const structured = parseStructuredPayload(parsed)
+      if (structured.length > 0) {
+        return structured
+      }
+
+      if (Array.isArray(parsed)) {
+        const parts = parsed.map(parsePart).filter((part): part is MessageContentPart => Boolean(part))
+        if (parts.length > 0) {
+          return parts
+        }
+      }
+
+      if (isRecord(parsed) && Array.isArray(parsed.parts)) {
+        const parts = parsed.parts.map(parsePart).filter((part): part is MessageContentPart => Boolean(part))
+        if (parts.length > 0) {
+          return parts
+        }
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return null
+}
+
 export function parseMessageParts(content: string): MessageContentPart[] {
   let trimmed = content.trim()
+
+  const structuredFromMarkdown = extractStructuredPartsFromMarkdown(content)
+  if (structuredFromMarkdown) {
+    return structuredFromMarkdown
+  }
   
   // if wrapped in markdown formatting, unwrap it
   if (trimmed.startsWith('```')) {
@@ -318,10 +366,15 @@ interface MessageContentPartsProps {
 
 export function MessageContentParts({ content }: MessageContentPartsProps) {
   const parts = useMemo(() => parseMessageParts(content), [content])
+  const hasFlightResults = parts.some((part) => part.type === 'flight-results')
 
   return (
     <div className="space-y-2">
       {parts.map((part, index) => {
+        if (hasFlightResults && (part.type === 'text' || part.type === 'markdown')) {
+          return null
+        }
+
         if (part.type === 'text') {
           return (
             <p key={`text-${index}`} className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -372,9 +425,11 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                  h2: ({node, ...props}) => { void node; return <h2 className="text-xl font-bold mb-3 mt-5 text-foreground" {...props} /> },
                  h3: ({node, ...props}) => { void node; return <h3 className="text-lg font-semibold mb-3 mt-4 text-foreground" {...props} /> },
                  strong: ({node, ...props}) => { void node; return <strong className="font-semibold text-foreground" {...props} /> },
-                 code: ({node, inline, className, children, ...props}) => {
+                 code: (props) => {
+                   const { node, className, children, ...rest } = props
                    void node
-                   const match = /language-(\w+)/.exec(className || '')
+                   const inline = Boolean((props as { inline?: boolean }).inline)
+                   const match = /language-(\w+)/.exec(typeof className === 'string' ? className : '')
                    const lang = match ? match[1] : ''
                    if (!inline && lang === 'flight') return <FlightCard data={String(children)} />
                    if (!inline && lang === 'hotel') return <HotelCard data={String(children)} />
@@ -422,7 +477,7 @@ export function MessageContentParts({ content }: MessageContentPartsProps) {
                        }
                      } catch {}
                    }
-                   return <code className={cn("bg-muted/50 px-1.5 py-0.5 rounded text-[13px] font-mono", !inline && "block p-4 overflow-x-auto mb-4 border border-border/50", className)} {...props}>{children}</code>
+                   return <code className={cn("bg-muted/50 px-1.5 py-0.5 rounded text-[13px] font-mono", !inline && "block p-4 overflow-x-auto mb-4 border border-border/50", className)} {...rest}>{children}</code>
                 }
               }}
             >

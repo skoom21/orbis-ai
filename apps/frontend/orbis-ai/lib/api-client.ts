@@ -84,6 +84,67 @@ export interface ConversationExportData {
   messages: ChatMessage[]
 }
 
+export interface HotelSearchRequest {
+  city: string
+  country_code?: string
+  checkin: string
+  checkout: string
+  guests?: number
+  max_price?: number
+  min_rating?: number
+}
+
+export interface HotelPrebookRequest {
+  offer_id: string
+  use_payment_sdk?: boolean
+}
+
+export interface HotelBookRequest {
+  prebook_id: string
+  holder: {
+    firstName: string
+    lastName: string
+    email: string
+    phone?: string
+  }
+  guests: Array<{
+    occupancyNumber: number
+    firstName: string
+    lastName: string
+    email: string
+    phone?: string
+  }>
+  payment_method?: string
+  transaction_id?: string
+}
+
+export interface HotelSearchResponse {
+  hotels: Array<Record<string, unknown>>
+  total?: number
+  source?: string
+  search_context?: Record<string, unknown>
+  note?: string
+}
+
+export interface HotelPrebookResponse {
+  prebook_id?: string
+  total_price?: number
+  currency?: string
+  cancellation_policies?: unknown
+  raw?: Record<string, unknown>
+  error?: string
+  detail?: string
+}
+
+export interface HotelBookResponse {
+  status?: string
+  booking_id?: string
+  hotel?: string | Record<string, unknown>
+  total_price?: number
+  currency?: string
+  details?: Record<string, unknown>
+}
+
 // ============== API Client Class ==============
 
 class ApiClient {
@@ -453,6 +514,41 @@ class ApiClient {
       return [`## ${roleLabel}`, '', message.content, ''].join('\n')
     })
     return [...header, ...messageBlocks].join('\n')
+  }
+
+  // ---------- LiteAPI Hotel Flow ----------
+
+  async searchHotels(data: HotelSearchRequest): Promise<HotelSearchResponse> {
+    return this.authenticatedRequest<HotelSearchResponse>('/api/v1/bookings/hotels/search', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getHotelDetails(hotelId: string): Promise<Record<string, unknown>> {
+    return this.authenticatedRequest<Record<string, unknown>>(`/api/v1/bookings/hotels/details/${hotelId}`, {
+      method: 'GET',
+    })
+  }
+
+  async prebookHotel(data: HotelPrebookRequest): Promise<HotelPrebookResponse> {
+    return this.authenticatedRequest<HotelPrebookResponse>('/api/v1/bookings/hotels/prebook', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getPrebook(prebookId: string): Promise<Record<string, unknown>> {
+    return this.authenticatedRequest<Record<string, unknown>>(`/api/v1/bookings/hotels/prebook/${prebookId}`, {
+      method: 'GET',
+    })
+  }
+
+  async bookHotel(data: HotelBookRequest): Promise<HotelBookResponse> {
+    return this.authenticatedRequest<HotelBookResponse>('/api/v1/bookings/hotels/book', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   }
 
   getConversationShareLink(conversationId: string, origin?: string): string {

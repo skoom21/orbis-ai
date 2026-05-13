@@ -1,5 +1,5 @@
 'use client'
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { Plane, Hotel as HotelIcon, Calendar, MapPin, Star, BadgeCheck, ReceiptText, Copy, ArrowRight, BedDouble, CalendarDays, Zap, ChevronRight } from 'lucide-react'
 import type { BookingSummaryItem, HotelResultItem } from '../types'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { ChatContext } from '../providers'
+import { apiClient } from '@/lib/api-client'
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,218 @@ function scoreToFive(rating?: number): number | undefined {
 function useOptionalSendMessage() {
   const ctx = useContext(ChatContext)
   return ctx?.sendMessage ?? null
+}
+
+interface HotelBookingPanelProps {
+  hotel: HotelResultItem
+  offerId?: string
+}
+
+function HotelBookingPanel({ hotel, offerId }: HotelBookingPanelProps) {
+  const [hotelDetails, setHotelDetails] = useState(hotel)
+  const [detailsError, setDetailsError] = useState<string | null>(null)
+  const [prebookData, setPrebookData] = useState<Record<string, unknown> | null>(null)
+  const [bookingData, setBookingData] = useState<Record<string, unknown> | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [busyAction, setBusyAction] = useState<'details' | 'prebook' | 'book' | null>(null)
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    paymentMethod: 'CREDIT',
+    transactionId: '',
+  })
+
+  const updateForm = (key: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  const loadExactDetails = async () => {
+    if (!hotel.id) return
+    setBusyAction('details')
+    setDetailsError(null)
+    try {
+      const details = await apiClient.getHotelDetails(hotel.id)
+      setHotelDetails((current) => ({
+        ...current,
+        name: typeof details.name === 'string' ? details.name : current.name,
+        description: typeof details.description === 'string' ? details.description : current.description,
+        photo: typeof details.photo === 'string' ? details.photo : current.photo,
+        stars: typeof details.stars === 'number' ? details.stars : current.stars,
+        rating: typeof details.rating === 'number' ? details.rating : current.rating,
+        address: typeof details.address === 'string' ? details.address : current.address,
+        city: typeof details.city === 'string' ? details.city : current.city,
+      }))
+      setActionMessage('Loaded exact hotel details.')
+    } catch (error) {
+      setDetailsError(error instanceof Error ? error.message : 'Failed to load hotel details')
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  const handlePrebook = async () => {
+    if (!offerId) {
+      setActionError('This hotel does not currently expose a bookable offer ID.')
+      return
+    }
+
+    setBusyAction('prebook')
+    setActionError(null)
+    setActionMessage(null)
+    try {
+      const result = await apiClient.prebookHotel({
+        offer_id: offerId,
+        use_payment_sdk: form.paymentMethod === 'TRANSACTION_ID',
+      })
+      setPrebookData(result)
+      if (result.error) {
+        setActionError(result.detail || result.error)
+      } else {
+        setActionMessage(`Price held successfully. Prebook ID: ${result.prebook_id ?? 'n/a'}`)
+      }
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Prebook failed')
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  const handleBook = async () => {
+    const prebookId = String(prebookData?.prebook_id ?? '')
+    if (!prebookId) {
+      setActionError('Create a prebook first before confirming the reservation.')
+      return
+    }
+
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
+      setActionError('Traveller first name, last name, and email are required.')
+      return
+    }
+
+    if (form.paymentMethod === 'TRANSACTION_ID' && !form.transactionId.trim()) {
+      setActionError('Transaction ID is required when using TRANSACTION_ID payment.')
+      return
+    }
+
+    setBusyAction('book')
+    setActionError(null)
+    setActionMessage(null)
+    try {
+      const result = await apiClient.bookHotel({
+        prebook_id: prebookId,
+        holder: {
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+        },
+        guests: [
+          {
+            occupancyNumber: 1,
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            email: form.email.trim(),
+            phone: form.phone.trim(),
+          },
+        ],
+        payment_method: form.paymentMethod,
+        transaction_id: form.paymentMethod === 'TRANSACTION_ID' ? form.transactionId.trim() : undefined,
+      })
+      setBookingData(result)
+      if (result.status === 'confirmed') {
+        setActionMessage(`Booking confirmed. Reference: ${result.booking_id ?? 'n/a'}`)
+      } else {
+        setActionMessage('Booking request completed.')
+      }
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Booking failed')
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  return (
+    <div className="mt-8 pt-8 border-t border-border/40 space-y-5">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1">Exact Hotel Data</div>
+          <div className="text-sm text-muted-foreground max-w-xl">
+            Pull live hotel details from LiteAPI before you hold a price or complete the booking.
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-xl h-10"
+          onClick={loadExactDetails}
+          disabled={busyAction === 'details'}
+        >
+          {busyAction === 'details' ? 'Loading…' : 'Load exact details'}
+        </Button>
+      </div>
+
+      {detailsError && <p className="text-xs text-red-500">{detailsError}</p>}
+      {actionMessage && <p className="text-xs text-emerald-600">{actionMessage}</p>}
+      {actionError && <p className="text-xs text-red-500">{actionError}</p>}
+
+      <div className="rounded-2xl border border-border/50 bg-muted/20 p-4 space-y-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          <input className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm" placeholder="First name" value={form.firstName} onChange={(event) => updateForm('firstName', event.target.value)} />
+          <input className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm" placeholder="Last name" value={form.lastName} onChange={(event) => updateForm('lastName', event.target.value)} />
+          <input className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm md:col-span-2" placeholder="Email address" type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} />
+          <input className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm md:col-span-2" placeholder="Phone number" value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} />
+          <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+            <label className="space-y-1 text-xs font-semibold text-muted-foreground">
+              Payment method
+              <select
+                className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm text-foreground"
+                value={form.paymentMethod}
+                onChange={(event) => updateForm('paymentMethod', event.target.value)}
+              >
+                <option value="CREDIT">CREDIT</option>
+                <option value="TRANSACTION_ID">TRANSACTION_ID</option>
+              </select>
+            </label>
+            <input
+              className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
+              placeholder="Transaction ID"
+              value={form.transactionId}
+              onChange={(event) => updateForm('transactionId', event.target.value)}
+              disabled={form.paymentMethod !== 'TRANSACTION_ID'}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" className="rounded-xl" onClick={handlePrebook} disabled={busyAction === 'prebook'}>
+            {busyAction === 'prebook' ? 'Holding price…' : 'Prebook rate'}
+          </Button>
+          <Button type="button" className="rounded-xl" onClick={handleBook} disabled={busyAction === 'book' || !prebookData?.prebook_id}>
+            {busyAction === 'book' ? 'Booking…' : 'Confirm booking'}
+          </Button>
+        </div>
+
+        {prebookData?.prebook_id && (
+          <div className="rounded-xl border border-border/60 bg-background p-3 text-xs space-y-1">
+            <div className="font-semibold text-foreground">Prebook ID: {String(prebookData.prebook_id)}</div>
+            {typeof prebookData.total_price === 'number' && (
+              <div className="text-muted-foreground">Held total: {formatPrice(prebookData.total_price, String(prebookData.currency ?? 'USD'))}</div>
+            )}
+          </div>
+        )}
+
+        {bookingData?.booking_id && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs space-y-1">
+            <div className="font-semibold text-foreground">Booking confirmed</div>
+            <div className="text-muted-foreground">Booking reference: {String(bookingData.booking_id)}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ── FlightCard ───────────────────────────────────────────────────────────────
@@ -415,6 +628,8 @@ export function HotelResultsCarousel({ items, title, subtitle }: HotelResultsCar
                         {offerId ? 'Book this Hotel' : 'Check Availability'}
                       </Button>
                     </div>
+
+                    <HotelBookingPanel hotel={hotel} offerId={offerId} />
                   </div>
                 </div>
               </DialogContent>
